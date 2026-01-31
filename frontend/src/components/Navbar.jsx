@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, User, PlusCircle, ShieldCheck } from 'lucide-react';
+import { LogOut, User, PlusCircle, ShieldCheck, Home } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (!user) return null;
 
@@ -14,12 +15,19 @@ const Navbar = () => {
     navigate('/login');
   };
 
+  const getLinkClass = (path) => {
+    const isActive = location.pathname === path;
+    return `px-4 py-2 rounded-t-lg transition-all text-sm font-medium uppercase tracking-wider flex items-center gap-2 border-b-4 ${isActive
+        ? "bg-white/10 border-vgec-orange text-white shadow-inner font-bold"
+        : "border-transparent hover:bg-white/5 text-blue-100 hover:text-white"
+      }`;
+  };
+
   return (
     <header className="shadow-md">
       {/* Top Branding Bar */}
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-6 flex items-center gap-4">
-          {/* Logo Placeholder - You can add an img tag here if you have the logo */}
           <div className="h-12 w-12 bg-vgec-blue rounded-full flex items-center justify-center text-white font-bold text-xl shadow-sm">
             V
           </div>
@@ -36,27 +44,27 @@ const Navbar = () => {
       <nav className="bg-vgec-blue text-white sticky top-0 z-50 shadow-lg">
         <div className="container mx-auto px-6 h-14 flex justify-between items-center">
           {/* Links */}
-          <div className="flex items-center gap-1 md:gap-6 overflow-x-auto">
-            <Link to="/" className="px-4 py-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium uppercase tracking-wider flex items-center gap-2">
-              Home
+          <div className="flex items-center gap-1 md:gap-4 overflow-x-auto h-full">
+            <Link to="/" className={getLinkClass('/')}>
+              <Home size={18} /> Home
             </Link>
 
             {user.role === 'admin' ? (
               <>
-                <Link to="/admin" className="px-4 py-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium uppercase tracking-wider flex items-center gap-2">
-                  <ShieldCheck size={16} /> Admin Panel
+                <Link to="/admin" className={getLinkClass('/admin')}>
+                  <ShieldCheck size={18} /> Admin Panel
                 </Link>
-                <Link to="/admin/profile" className="px-4 py-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium uppercase tracking-wider">
-                  Profile
+                <Link to="/admin/profile" className={getLinkClass('/admin/profile')}>
+                  <User size={18} /> Profile
                 </Link>
               </>
             ) : (
               <>
-                <Link to="/add-review" className="px-4 py-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium uppercase tracking-wider flex items-center gap-2">
-                  <PlusCircle size={16} /> Add Review
+                <Link to="/add-review" className={getLinkClass('/add-review')}>
+                  <PlusCircle size={18} /> Add Review
                 </Link>
-                <Link to="/profile" className="px-4 py-2 hover:bg-white/10 rounded-md transition-colors text-sm font-medium uppercase tracking-wider flex items-center gap-2">
-                  <User size={16} /> Profile
+                <Link to="/profile" className={getLinkClass('/profile')}>
+                  <User size={18} /> Profile
                 </Link>
               </>
             )}
