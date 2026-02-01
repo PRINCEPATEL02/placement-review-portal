@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { createReview, getReviews, approveReview, deleteReview, likeReview } = require('../controllers/reviewController');
+const { createReview, getReviews, approveReview, deleteReview, likeReview, getMyReviews, deleteMyReview } = require('../controllers/reviewController');
 const { verifyToken, verifyAdmin } = require('../middlewares/authMiddleware');
+
+router.get('/my-reviews', verifyToken, getMyReviews); // Get own reviews
+router.delete('/my-reviews/:id', verifyToken, deleteMyReview); // Delete own review
 
 router.get('/', getReviews); // Public or filtered by param
 router.post('/', verifyToken, createReview); // Students submit

@@ -10,6 +10,7 @@ import StudentProfile from './pages/student/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/Profile';
 import AdminEditReview from './pages/admin/EditReview';
+import MyPosts from './pages/student/MyPosts';
 import Navbar from './components/Navbar';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -53,6 +54,11 @@ const AppRoutes = () => {
           <Route path="/profile" element={
             <ProtectedRoute allowedRoles={['student']}>
               <StudentProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/my-posts" element={
+            <ProtectedRoute allowedRoles={['student']}>
+              <MyPosts />
             </ProtectedRoute>
           } />
 

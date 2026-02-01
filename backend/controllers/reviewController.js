@@ -169,3 +169,31 @@ exports.likeReview = async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 };
+
+// Get My Reviews (Student)
+exports.getMyReviews = async (req, res) => {
+    try {
+        const posts = await Post.find({ enrollment: req.user.enrollment }).sort({ created_at: -1 });
+        res.json(posts);
+    } catch (err) {
+        console.error("Get My Reviews Error:", err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Delete My Review (Student)
+exports.deleteMyReview = async (req, res) => {
+    try {
+        const post = await Post.findOne({ _id: req.params.id, enrollment: req.user.enrollment });
+
+        if (!post) {
+            return res.status(404).json({ message: 'Review not found or you are not authorized to delete this review' });
+        }
+
+        await Post.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Review deleted successfully' });
+    } catch (err) {
+        console.error("Delete My Review Error:", err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};

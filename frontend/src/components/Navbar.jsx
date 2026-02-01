@@ -69,6 +69,9 @@ const Navbar = () => {
                 <Link to="/profile" className={getLinkClass('/profile')}>
                   <User size={18} /> Profile
                 </Link>
+                <Link to="/my-posts" className={getLinkClass('/my-posts')}>
+                  <ShieldCheck size={18} /> My Posts
+                </Link>
               </>
             )}
           </div>
