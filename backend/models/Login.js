@@ -5,7 +5,8 @@ const LoginSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   last_login: { type: Date },
-  role: { type: String, enum: ['student', 'admin'], required: true }
+  role: { type: String, enum: ['student', 'admin'], required: true },
+  is_approved: { type: Boolean, default: false }
 });
 
 module.exports = mongoose.model('Login', LoginSchema);

@@ -10,6 +10,8 @@ import StudentProfile from './pages/student/Profile';
 import AdminDashboard from './pages/admin/Dashboard';
 import AdminProfile from './pages/admin/Profile';
 import AdminEditReview from './pages/admin/EditReview';
+import AddUser from './pages/admin/AddUser';
+import PendingRequests from './pages/admin/PendingRequests';
 import MyPosts from './pages/student/MyPosts';
 import Navbar from './components/Navbar';
 
@@ -47,17 +49,17 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } />
           <Route path="/add-review" element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ProtectedRoute allowedRoles={['student']}>
               <StudentReview />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ProtectedRoute allowedRoles={['student']}>
               <StudentProfile />
             </ProtectedRoute>
           } />
           <Route path="/my-posts" element={
-            <ProtectedRoute allowedRoles={['student', 'admin']}>
+            <ProtectedRoute allowedRoles={['student']}>
               <MyPosts />
             </ProtectedRoute>
           } />
@@ -76,6 +78,16 @@ const AppRoutes = () => {
           <Route path="/admin/edit/:id" element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminEditReview />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/add-user" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AddUser />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin/pending-requests" element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <PendingRequests />
             </ProtectedRoute>
           } />
 

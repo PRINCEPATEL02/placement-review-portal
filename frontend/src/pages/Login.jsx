@@ -118,7 +118,7 @@ const Login = () => {
                         </div>
 
                         <h2 className="text-3xl font-bold uppercase tracking-widest text-center mt-4">
-                            VGEC CONNECT
+                            VGEC Review
                         </h2>
                         <div className="w-16 h-1 bg-vgec-orange mt-6 mb-4 rounded-full"></div>
                         <p className="text-blue-100 text-center max-w-sm font-light">

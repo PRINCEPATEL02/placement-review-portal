@@ -58,6 +58,11 @@ exports.login = async (req, res) => {
     const user = await Login.findOne({ enrollment });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
+    // Check approval status
+    if (user.is_approved === false) {
+      return res.status(403).json({ message: 'Your account is pending approval from the administrator.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
@@ -69,6 +74,92 @@ exports.login = async (req, res) => {
     res.json({ token, user: { enrollment: user.enrollment, email: user.email, role: user.role } });
   } catch (err) {
     console.error("Login Error:", err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Admin Create User (Auto-Approved)
+exports.createUser = async (req, res) => {
+  const { enrollment, email, password, role, first_name, last_name } = req.body;
+
+  try {
+    const existingLogin = await Login.findOne({ $or: [{ enrollment }, { email }] });
+    if (existingLogin) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const newLogin = new Login({
+      enrollment,
+      email,
+      password: hashedPassword,
+      role,
+      is_approved: true // Admin created users are auto-approved
+    });
+
+    await newLogin.save();
+
+    const newUser = new User({
+      enrollment,
+      first_name: first_name || '',
+      last_name: last_name || '',
+      email_id: email,
+      role
+    });
+
+    await newUser.save();
+
+    res.status(201).json({ message: 'User created and approved successfully' });
+  } catch (error) {
+    console.error("Create User Error:", error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// Get Pending Users
+exports.getPendingUsers = async (req, res) => {
+  try {
+    // Find logins that are not approved
+    const pendingLogins = await Login.find({ is_approved: false }).lean();
+
+    // Enrich with User details (names)
+    const enrollments = pendingLogins.map(l => l.enrollment);
+    const users = await User.find({ enrollment: { $in: enrollments } }).lean();
+
+    const pendingRequests = pendingLogins.map(login => {
+      const userDetail = users.find(u => u.enrollment === login.enrollment) || {};
+      return {
+        _id: login._id,
+        enrollment: login.enrollment,
+        email: login.email,
+        role: login.role,
+        first_name: userDetail.first_name,
+        last_name: userDetail.last_name,
+        date: login._id.getTimestamp() // Approximate creation time from ObjectId
+      };
+    });
+
+    res.json(pendingRequests);
+  } catch (err) {
+    console.error("Get Pending Error:", err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Approve User
+exports.approveUser = async (req, res) => {
+  try {
+    const login = await Login.findById(req.params.id);
+    if (!login) return res.status(404).json({ message: 'User not found' });
+
+    login.is_approved = true;
+    await login.save();
+
+    // Optional: Send email notification that account is approved
+
+    res.json({ message: 'User approved successfully' });
+  } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 };
