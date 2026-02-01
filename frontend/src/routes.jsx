@@ -47,17 +47,17 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } />
           <Route path="/add-review" element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
               <StudentReview />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
               <StudentProfile />
             </ProtectedRoute>
           } />
           <Route path="/my-posts" element={
-            <ProtectedRoute allowedRoles={['student']}>
+            <ProtectedRoute allowedRoles={['student', 'admin']}>
               <MyPosts />
             </ProtectedRoute>
           } />

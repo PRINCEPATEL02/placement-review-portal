@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, User, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
     const [enrollment, setEnrollment] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
     const { user, login } = useAuth();
     const navigate = useNavigate();
 
@@ -35,68 +33,100 @@ const Login = () => {
     };
 
     return (
-        <div className="flex justify-center items-start pt-20 min-h-[80vh]">
-            <div className="w-full max-w-md bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden">
-                <div className="bg-vgec-blue py-6 text-center">
-                    <h2 className="text-2xl font-bold text-white mb-1">Student / Admin Login</h2>
-                    <p className="text-blue-100 text-sm">Access the Official Placement Portal</p>
-                </div>
+        <div className="flex min-h-screen bg-blue-50 items-center justify-center p-4">
+            <div className="flex w-full max-w-5xl bg-white rounded-lg shadow-2xl overflow-hidden min-h-[600px]">
 
-                <div className="p-8">
-                    {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm text-center border border-red-100">{error}</div>}
+                {/* Left Side - Login Form */}
+                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center relative">
+                    <div className="w-full max-w-md mx-auto">
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Enrollment Number</label>
-                            <div className="relative">
-                                <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                        {/* Header Box */}
+                        <div className="flex justify-center mb-10">
+                            <div className="bg-vgec-blue text-white px-8 py-2 text-3xl font-bold uppercase tracking-wider shadow-md">
+                                Login
+                            </div>
+                        </div>
+
+                        {error && (
+                            <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm text-center border border-red-100">
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+
+                            {/* Username / Enrollment */}
+                            <div>
+                                <label className="block text-gray-700 font-bold mb-2">Username</label>
                                 <input
                                     type="text"
                                     value={enrollment}
                                     onChange={(e) => setEnrollment(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400 text-sm"
-                                    placeholder="230170116055"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-vgec-blue focus:border-transparent transition placeholder-gray-400"
+                                    placeholder="Enter Username Here..."
                                     required
                                 />
                             </div>
-                        </div>
 
-                        <div>
-                            <div className="flex justify-between mb-2">
-                                <label className="block text-sm font-semibold text-gray-700">Password</label>
-                                <Link to="/forgot-password" className="text-xs text-vgec-blue hover:underline font-medium">Forgot Password?</Link>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                            {/* Password */}
+                            <div>
+                                <label className="block text-gray-700 font-bold mb-2">Password</label>
                                 <input
-                                    type={showPassword ? "text" : "password"}
+                                    type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-10 py-3 rounded-md border border-gray-300 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400 text-sm"
-                                    placeholder="••••••••"
+                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-vgec-blue focus:border-transparent transition placeholder-gray-400"
+                                    placeholder="Enter Password Here..."
                                     required
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </div>
+
+                            {/* Actions */}
+                            <div>
+                                <button type="submit" className="w-full bg-[#1e293b] text-white font-bold py-3.5 rounded-md hover:bg-slate-800 transition duration-300 shadow-lg text-lg">
+                                    Login
                                 </button>
+                            </div>
+
+                            <div className="text-center pt-2">
+                                <Link to="/forgot-password" className="text-vgec-blue font-semibold hover:underline text-sm">
+                                    Forgot your password?
+                                </Link>
+                                <div className="mt-4 text-sm text-gray-500">
+                                    New here? <Link to="/register" className="text-vgec-orange font-bold hover:underline">Register</Link>
+                                </div>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+                {/* Right Side - Brand Section */}
+                <div className="hidden md:flex w-1/2 bg-vgec-blue flex-col items-center justify-center text-white p-12 relative overflow-hidden">
+                    {/* Decorative Circles */}
+                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                        <div className="absolute -top-20 -right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+                        <div className="absolute -bottom-20 -left-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+                    </div>
+
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="w-48 h-48 bg-white rounded-full flex items-center justify-center mb-8 shadow-2xl p-2">
+                            {/* College Logo Placeholder - using Text if image not available */}
+                            <div className="w-full h-full rounded-full border-4 border-vgec-blue flex items-center justify-center bg-white p-4">
+                                <img src="/favicon.ico" alt="VGEC Logo" className="w-full h-full object-contain" />
                             </div>
                         </div>
 
-
-
-                        <button type="submit" className="w-full bg-vgec-orange hover:bg-orange-700 text-white font-bold py-3 rounded-md shadow-md transition-all hover:-translate-y-0.5 mt-2">
-                            Sign In
-                        </button>
-
-                        <p className="text-center text-gray-600 text-sm mt-6">
-                            New Student? <Link to="/register" className="text-vgec-blue font-bold hover:underline">Register Now</Link>
+                        <h2 className="text-3xl font-bold uppercase tracking-widest text-center mt-4">
+                            VGEC CONNECT
+                        </h2>
+                        <div className="w-16 h-1 bg-vgec-orange mt-6 mb-4 rounded-full"></div>
+                        <p className="text-blue-100 text-center max-w-sm font-light">
+                            Vishwakarma Government Engineering College<br />Placement & Review Portal
                         </p>
-                    </form>
+                    </div>
                 </div>
+
             </div>
         </div>
     );
