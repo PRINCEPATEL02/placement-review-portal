@@ -52,27 +52,22 @@ const Navbar = () => {
               <Home size={18} /> Home
             </Link>
 
-            {user.role === 'admin' ? (
-              <>
-                <Link to="/admin" className={getLinkClass('/admin')}>
-                  <ShieldCheck size={18} /> Admin Panel
-                </Link>
-                <Link to="/admin/profile" className={getLinkClass('/admin/profile')}>
-                  <User size={18} /> Profile
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link to="/add-review" className={getLinkClass('/add-review')}>
-                  <PlusCircle size={18} /> Add Review
-                </Link>
-                <Link to="/profile" className={getLinkClass('/profile')}>
-                  <User size={18} /> Profile
-                </Link>
-                <Link to="/my-posts" className={getLinkClass('/my-posts')}>
-                  <ShieldCheck size={18} /> My Posts
-                </Link>
-              </>
+            {/* Common Links for Students & Admins */}
+            <Link to="/add-review" className={getLinkClass('/add-review')}>
+              <PlusCircle size={18} /> Add Review
+            </Link>
+            <Link to="/my-posts" className={getLinkClass('/my-posts')}>
+              <ShieldCheck size={18} /> My Posts
+            </Link>
+            <Link to="/profile" className={getLinkClass('/profile')}>
+              <User size={18} /> Profile
+            </Link>
+
+            {/* Admin Only Link */}
+            {user.role === 'admin' && (
+              <Link to="/admin" className={getLinkClass('/admin')}>
+                <ShieldCheck size={18} /> Admin Panel
+              </Link>
             )}
           </div>
 
