@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { getApiUrl } from '../utils/apiConfig';
+import Loader from '../components/Loader';
 
 const AuthContext = createContext();
 
@@ -18,15 +19,14 @@ export const AuthProvider = ({ children }) => {
           const res = await axios.get(getApiUrl('/auth/profile'), {
             headers: { Authorization: `Bearer ${token}` }
           });
-          // Combine profile data with token data if needed, or just set user
-          // The profile endpoint returns user details
           setUser({ ...res.data, token });
         } catch (error) {
           localStorage.removeItem('token');
           setUser(null);
         }
       }
-      setLoading(false);
+      // Artificial delay to ensure loader is visible for a moment (smoothness)
+      setTimeout(() => setLoading(false), 500);
     };
     checkLoggedIn();
   }, []);
@@ -52,14 +52,13 @@ export const AuthProvider = ({ children }) => {
     const res = await axios.put(getApiUrl('/auth/profile'), userData, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    // Update local user state
     setUser(prev => ({ ...prev, ...userData }));
     return res.data;
   };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
-      {!loading && children}
+      {loading ? <Loader /> : children}
     </AuthContext.Provider>
   );
 };

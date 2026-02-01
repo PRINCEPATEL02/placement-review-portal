@@ -1,0 +1,29 @@
+/* Button.css */
+.btn-loader-spinner {
+    width: 1em;
+    height: 1em;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    border-top-color: currentColor;
+    border-right-color: currentColor;
+    animation: btn-spin 0.6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes btn-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Active click effect */
+.btn-animate-click:active {
+    transform: scale(0.97);
+}
+
+/* Transition for smooth width/opacity changes if we wanted complex animations, 
+   but for now we simply swap content */

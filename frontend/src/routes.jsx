@@ -14,16 +14,15 @@ import AddUser from './pages/admin/AddUser';
 import PendingRequests from './pages/admin/PendingRequests';
 import MyPosts from './pages/student/MyPosts';
 import Navbar from './components/Navbar';
+import Loader from './components/Loader';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
+    if (loading) {
+      return <Loader show={true} />;
+    }
   }
 
   if (!user) return <Navigate to="/login" />;

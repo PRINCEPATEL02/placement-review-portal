@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Save, Edit, User, Mail, Calendar, Award } from "lucide-react";
+import Button from "../../components/Button";
 
 const StudentProfile = () => {
   const { user, updateProfile } = useAuth();
@@ -292,31 +293,22 @@ const StudentProfile = () => {
 
               {isEditing && (
                 <div className="flex justify-end space-x-4 pt-6 border-t border-secondary-200">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={handleCancel}
-                    className="btn-secondary"
                     disabled={loading}
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    disabled={loading}
-                    className="btn-primary inline-flex items-center space-x-2"
+                    loading={loading}
+                    variant="primary"
                   >
-                    {loading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-5 w-5" />
-                        <span>Save Changes</span>
-                      </>
-                    )}
-                  </button>
+                    <Save className="h-5 w-5" />
+                    <span>Save Changes</span>
+                  </Button>
                 </div>
               )}
             </form>

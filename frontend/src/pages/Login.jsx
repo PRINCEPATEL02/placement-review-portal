@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff } from 'lucide-react';
+import Button from '../components/Button';
 
 const Login = () => {
     const [enrollment, setEnrollment] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
     const { user, login } = useAuth();
     const navigate = useNavigate();
 
@@ -24,6 +26,7 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
 
         try {
             const loggedInUser = await login(enrollment, password);
@@ -31,6 +34,7 @@ const Login = () => {
             else navigate('/', { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
+            setLoading(false);
         }
     };
 
@@ -94,9 +98,15 @@ const Login = () => {
 
                             {/* Actions */}
                             <div>
-                                <button type="submit" className="w-full bg-[#1e293b] text-white font-bold py-3.5 rounded-md hover:bg-slate-800 transition duration-300 shadow-lg text-lg">
+                                <Button
+                                    type="submit"
+                                    loading={loading}
+                                    className="w-full bg-[#1e293b] hover:bg-slate-800 text-white font-bold py-3.5 rounded-md transition duration-300 shadow-lg text-lg border-0"
+                                    variant="custom" // Not supported yet but class overrides pass through. 
+                                // I will use variant='primary' actually, but stick to custom class names provided
+                                >
                                     Login
-                                </button>
+                                </Button>
                             </div>
 
                             <div className="text-center pt-2">
