@@ -10,6 +10,7 @@ import {
   Award,
   BarChart3,
 } from "lucide-react";
+import { getApiUrl } from '../../utils/apiConfig';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState({
@@ -31,7 +32,7 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       // Fetch all reviews (admin view)
-      const reviewsRes = await axios.get('http://localhost:5000/api/reviews?admin=true', {
+      const reviewsRes = await axios.get(getApiUrl('/reviews?admin=true'), {
         headers: { Authorization: `Bearer ${token}` }
       });
       const reviews = reviewsRes.data;

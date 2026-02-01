@@ -47,8 +47,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (userData) => {
+    const token = localStorage.getItem('token');
+    const res = await axios.put(getApiUrl('/auth/profile'), userData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    // Update local user state
+    setUser(prev => ({ ...prev, ...userData }));
+    return res.data;
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile }}>
       {!loading && children}
     </AuthContext.Provider>
   );

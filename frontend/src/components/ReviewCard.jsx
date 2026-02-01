@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { ThumbsUp, Clock, User, Building } from "lucide-react";
+import { getApiUrl } from '../utils/apiConfig';
 
 const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
   const { user } = useAuth();
@@ -23,7 +24,7 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const res = await axios.post(`http://localhost:5000/api/reviews/${review._id}/like`, {}, {
+      const res = await axios.post(getApiUrl(`/reviews/${review._id}/like`), {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
