@@ -83,18 +83,18 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
       {/* Header */}
-      <div className="p-6 pb-4">
-        <div className="flex items-start justify-between mb-3">
+      <div className="p-4 md:p-6 pb-4">
+        <div className="flex flex-col md:flex-row md:items-start justify-between mb-3 gap-2">
           <div className="flex-1">
-            <h3 className="text-xl font-bold text-vgec-blue flex items-center gap-2">
-              <Building className="h-5 w-5 text-vgec-orange" />
-              {review.company_name}
+            <h3 className="text-lg md:text-xl font-bold text-vgec-blue flex flex-wrap items-center gap-2">
+              <Building className="h-5 w-5 text-vgec-orange shrink-0" />
+              <span className="break-words">{review.company_name}</span>
             </h3>
             <p className="text-gray-600 font-medium text-sm mt-1">{review.role}</p>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2 mt-2 md:mt-0">
             <span
-              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getLevelColor(review.level)}`}
+              className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border whitespace-nowrap ${getLevelColor(review.level)}`}
             >
               {review.level}
             </span>
@@ -102,9 +102,9 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
         </div>
 
         {/* Metadata */}
-        <div className="flex items-center justify-between text-xs text-gray-500 mb-4 border-b border-gray-50 pb-4">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center justify-between text-xs text-gray-500 mb-4 border-b border-gray-50 pb-4 gap-y-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="flex items-center gap-1 whitespace-nowrap">
               <Clock className="h-3.5 w-3.5" /> {formatDate(review.created_at || review.date_time)}
             </span>
             <span className="font-medium text-gray-600">
@@ -115,7 +115,7 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
               </span>
             </span>
           </div>
-          <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getTypeColor(review.type)}`}>
+          <span className={`px-2 py-0.5 rounded text-xs font-medium border whitespace-nowrap ${getTypeColor(review.type)}`}>
             {review.type}
           </span>
         </div>

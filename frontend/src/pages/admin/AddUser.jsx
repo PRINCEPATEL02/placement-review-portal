@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { User, Mail, Lock, Shield, Loader, CheckCircle } from 'lucide-react';
+import { User, Mail, Lock, Shield, Loader, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 
 const AddUser = () => {
@@ -15,6 +15,7 @@ const AddUser = () => {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -131,14 +132,21 @@ const AddUser = () => {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all"
+                                    className="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-200 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all"
                                     placeholder="••••••••"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
                             </div>
                         </div>
 

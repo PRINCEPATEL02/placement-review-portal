@@ -20,7 +20,7 @@ const Navbar = () => {
 
   const getLinkClass = (path) => {
     const isActive = location.pathname === path;
-    return `px-4 py-2 rounded-t-lg transition-all text-sm font-medium uppercase tracking-wider flex items-center gap-2 border-b-4 ${isActive
+    return `px-3 md:px-4 py-2 rounded-t-lg transition-all text-sm font-medium uppercase tracking-wider flex items-center gap-2 border-b-4 ${isActive
       ? "bg-white/10 border-vgec-orange text-white shadow-inner font-bold"
       : "border-transparent hover:bg-white/5 text-blue-100 hover:text-white"
       }`;
