@@ -1,56 +1,74 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Plus, Search, Filter, Star, Eye, ThumbsUp, RefreshCw } from "lucide-react";
 import { getApiUrl } from "../../utils/apiConfig";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const StudentHome = () => {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState([]);
-  const [filteredReviews, setFilteredReviews] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch(getApiUrl('/reviews'));
-        if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
-        }
-        const data = await response.json();
-        setReviews(data);
-        setFilteredReviews(data);
-      } catch (error) {
-        console.error("Error fetching reviews:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, [searchTerm, selectedLevel, selectedType]); // Re-fetch only when filters change? No, filters are client side. 
-  // We want to fetch ONCE on mount, but provide manual refresh.
-
-  const fetchReviewsManual = async () => {
-    setLoading(true);
-    try {
+  const { data: reviews = [], isLoading, isError, refetch } = useQuery({
+    queryKey: ['reviews'],
+    queryFn: async () => {
       const response = await fetch(getApiUrl('/reviews'));
-      if (!response.ok) throw new Error('Failed to fetch reviews');
-      const data = await response.json();
-      setReviews(data);
-      setFilteredReviews(data); // Reset filters on fresh fetch or re-apply? 
-      // Ideally re-apply filters, but for now simple refresh.
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
+      }
+      return response.json();
+    },
+    refetchInterval: 5000,
+    staleTime: 1000 * 30,
+  });
 
-  useEffect(() => {
+  const likeMutation = useMutation({
+    mutationFn: async (reviewId) => {
+      const token = localStorage.getItem('token');
+      const response = await fetch(getApiUrl(`/reviews/${reviewId}/like`), {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      if (!response.ok) throw new Error('Failed to like review');
+      return response.json();
+    },
+    onMutate: async (reviewId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries(['reviews']);
+
+      // Snapshot previous value
+      const previousReviews = queryClient.getQueryData(['reviews']);
+
+      // Optimistically update
+      queryClient.setQueryData(['reviews'], (old) => {
+        return old.map(review => {
+          if (review._id === reviewId) {
+            // Toggle logic simulation: if we assume user hasn't liked it yet
+            // ideally we check if user is in 'likedBy', but for simple optimistic boost we just +1
+            // Real logic requires user ID check. For now, we will just increment to show effect.
+            return { ...review, likes: review.likes + 1 };
+          }
+          return review;
+        });
+      });
+
+      return { previousReviews };
+    },
+    onError: (err, newTodo, context) => {
+      queryClient.setQueryData(['reviews'], context.previousReviews);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(['reviews']);
+    },
+  });
+
+  const filteredReviews = useMemo(() => {
     let filtered = reviews;
 
     if (searchTerm) {
@@ -71,8 +89,8 @@ const StudentHome = () => {
       filtered = filtered.filter((review) => review.type === selectedType);
     }
 
-    setFilteredReviews(filtered);
-  }, [searchTerm, selectedLevel, selectedType, reviews]);
+    return filtered;
+  }, [reviews, searchTerm, selectedLevel, selectedType]);
 
   const getLevelColor = (level) => {
     switch (level) {
@@ -93,10 +111,18 @@ const StudentHome = () => {
       : "bg-purple-100 text-purple-800";
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        Error loading reviews.
       </div>
     );
   }
@@ -116,7 +142,7 @@ const StudentHome = () => {
 
       <div className="flex justify-end mb-4">
         <button
-          onClick={fetchReviewsManual}
+          onClick={() => refetch()}
           className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
         >
           <RefreshCw size={16} /> Refresh Feed
@@ -177,7 +203,7 @@ const StudentHome = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredReviews.map((review) => (
           <div
-            key={review.id}
+            key={review._id || review.id}
             className="card hover:shadow-lg transition-shadow duration-200"
           >
             <div className="flex items-start justify-between mb-4">
@@ -211,10 +237,13 @@ const StudentHome = () => {
                   <Eye className="h-4 w-4" />
                   <span>{review.views}</span>
                 </div>
-                <div className="flex items-center space-x-1">
-                  <ThumbsUp className="h-4 w-4" />
+                <button
+                  onClick={() => likeMutation.mutate(review._id || review.id)}
+                  className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                >
+                  <ThumbsUp className={`h-4 w-4 ${review.likes > 0 ? "fill-current" : ""}`} />
                   <span>{review.likes}</span>
-                </div>
+                </button>
               </div>
               <span>{new Date(review.created_at).toLocaleDateString()}</span>
             </div>

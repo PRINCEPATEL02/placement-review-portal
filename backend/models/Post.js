@@ -18,4 +18,9 @@ const PostSchema = new mongoose.Schema({
   views: { type: Number, default: 0 }
 });
 
+// Indexes for performance
+PostSchema.index({ status: 1, created_at: -1 });
+PostSchema.index({ enrollment: 1 });
+PostSchema.index({ company_name: 'text' }); // Text search capability
+
 module.exports = mongoose.model('Post', PostSchema);

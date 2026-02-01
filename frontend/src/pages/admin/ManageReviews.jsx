@@ -13,31 +13,27 @@ import {
 import { getApiUrl } from '../../utils/apiConfig';
 import { RefreshCw } from 'lucide-react';
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
 const ManageReviews = () => {
-  const [reviews, setReviews] = useState([]);
-  const [filteredReviews, setFilteredReviews] = useState([]);
+  const [filteredReviews, setFilteredReviews] = useState([]); // Kept only for client-side filtering
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedReview, setSelectedReview] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    fetchReviews();
-  }, []);
-
-  const fetchReviews = async () => {
-    try {
-      // Fetch all reviews (admin=true to get pending ones too)
+  // 1. Fetch Reviews (Polling enabled for "Real-time" dashboard)
+  const { data: reviews = [], isLoading, refetch } = useQuery({
+    queryKey: ['admin-reviews'],
+    queryFn: async () => {
       const res = await axios.get(getApiUrl('/reviews?admin=true'));
-      setReviews(res.data);
-      setFilteredReviews(res.data);
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+    refetchInterval: 5000,
+    staleTime: 1000 * 10,
+  });
 
+  // 2. Client-side Filtering of "reviews"
   useEffect(() => {
     let filtered = reviews;
 
@@ -57,45 +53,54 @@ const ManageReviews = () => {
     setFilteredReviews(filtered);
   }, [searchTerm, statusFilter, reviews]);
 
-  const handleStatusChange = async (reviewId, newStatus) => {
-    const token = localStorage.getItem('token');
-    try {
+
+  // 3. Mutation: Update Status (Approve/Reject)
+  const statusMutation = useMutation({
+    mutationFn: async ({ reviewId, newStatus }) => {
+      const token = localStorage.getItem('token');
       if (newStatus === 'approved') {
-        await axios.put(getApiUrl(`/reviews/${reviewId}/approve`), {}, {
+        return axios.put(getApiUrl(`/reviews/${reviewId}/approve`), {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
-        // Use generic update for rejection or other statuses
-        await axios.put(getApiUrl(`/reviews/${reviewId}`), { status: newStatus }, {
+        return axios.put(getApiUrl(`/reviews/${reviewId}`), { status: newStatus }, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
-
-      // Optimistic update
-      setReviews((prev) =>
-        prev.map((review) =>
-          review._id === reviewId ? { ...review, status: newStatus } : review
-        )
-      );
-    } catch (err) {
-      console.error("Error updating status:", err);
-      alert(`Failed to update status: ${err.response?.data?.message || err.message}`);
-      fetchReviews(); // Revert changes by re-fetching
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-reviews']); // Auto-refresh list
+      queryClient.invalidateQueries(['reviews']); // Also refresh student view if they are cached
+    },
+    onError: (err) => {
+      alert(`Failed to update status: ${err.message}`);
     }
+  });
+
+  const handleStatusChange = (reviewId, newStatus) => {
+    statusMutation.mutate({ reviewId, newStatus });
   };
 
-  const handleDelete = async (reviewId) => {
-    if (window.confirm("Are you sure you want to delete this review?")) {
+  // 4. Mutation: Delete Review
+  const deleteMutation = useMutation({
+    mutationFn: async (reviewId) => {
       const token = localStorage.getItem('token');
-      try {
-        await axios.delete(getApiUrl(`/reviews/${reviewId}`), {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setReviews((prev) => prev.filter((review) => review._id !== reviewId));
-      } catch (err) {
-        console.error("Error deleting review:", err);
-        alert("Failed to delete review");
-      }
+      return axios.delete(getApiUrl(`/reviews/${reviewId}`), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['admin-reviews']);
+      queryClient.invalidateQueries(['reviews']);
+    },
+    onError: (err) => {
+      alert("Failed to delete review");
+    }
+  });
+
+  const handleDelete = (reviewId) => {
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      deleteMutation.mutate(reviewId);
     }
   };
 
@@ -125,7 +130,7 @@ const ManageReviews = () => {
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
@@ -147,11 +152,11 @@ const ManageReviews = () => {
 
       <div className="flex justify-end mb-4">
         <button
-          onClick={fetchReviews}
-          disabled={loading}
+          onClick={() => refetch()}
+          disabled={isLoading}
           className="flex items-center gap-2 text-sm text-vgec-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
         >
-          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
           Refresh Data
         </button>
       </div>

@@ -55,35 +55,39 @@ exports.updateReview = async (req, res) => {
 // Get All Reviews
 exports.getReviews = async (req, res) => {
     const isAdmin = req.query.admin === 'true';
-    console.log(`GET /reviews calling. Admin param: ${req.query.admin}, Mode: ${isAdmin ? 'Admin' : 'Public'}`);
 
     try {
         let query = { status: 'approved' };
         if (isAdmin) {
-            query = {}; // Admin sees all
+            query = {};
         }
 
-        const posts = await Post.find(query).sort({ created_at: -1 }).lean(); // Use lean to allow modification
+        // Optimize: Select only needed fields to reduce payload size
+        const posts = await Post.find(query)
+            .select('company_name role type level steps views likes created_at enrollment status author')
+            .sort({ created_at: -1 })
+            .lean();
 
-        // Dynamically populate author names for existing records
-        const enrollments = posts.map(p => p.enrollment).filter(e => e);
+        // Dynamically populate author names
+        const enrollments = [...new Set(posts.map(p => p.enrollment).filter(Boolean))];
+
         if (enrollments.length > 0) {
-            const users = await User.find({ enrollment: { $in: enrollments } }).select('enrollment first_name last_name');
-            const userMap = {};
-            users.forEach(u => {
-                userMap[u.enrollment] = `${u.first_name} ${u.last_name}`;
-            });
+            const users = await User.find({ enrollment: { $in: enrollments } })
+                .select('enrollment first_name last_name')
+                .lean();
 
-            // Update author field in the response if a valid name is found
+            const userMap = users.reduce((acc, u) => {
+                acc[u.enrollment] = `${u.first_name} ${u.last_name}`;
+                return acc;
+            }, {});
+
             posts.forEach(post => {
                 if (post.enrollment && userMap[post.enrollment]) {
                     post.author = userMap[post.enrollment];
                 }
-                // If post.author is still missing/undefined, frontend handles fallback to enrollment
             });
         }
 
-        console.log(`Found ${posts.length} reviews.`);
         res.json(posts);
     } catch (err) {
         console.error("GetReviews Error:", err);

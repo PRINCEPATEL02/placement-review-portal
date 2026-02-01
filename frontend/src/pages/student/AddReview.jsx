@@ -4,10 +4,12 @@ import { useAuth } from "../../context/AuthContext";
 import { ArrowLeft, Save, AlertCircle } from "lucide-react";
 import { getApiUrl } from "../../utils/apiConfig";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+
 const AddReview = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [errors, setErrors] = useState({});
 
   const [formData, setFormData] = useState({
@@ -60,20 +62,10 @@ const AddReview = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
+  const mutation = useMutation({
+    mutationFn: async (newReview) => {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error("No authorization token found");
-      }
+      if (!token) throw new Error("No authorization token found");
 
       const response = await fetch(getApiUrl('/reviews'), {
         method: 'POST',
@@ -81,26 +73,33 @@ const AddReview = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(newReview)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to submit review');
       }
-
-      // Show success message and redirect
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reviews']); // Mark reviews as stale so they reload immediately
       navigate("/student/home", {
         state: {
           message: "Your placement review has been submitted successfully!",
         },
       });
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error submitting review:", error);
       setErrors({ submit: error.message || "Failed to submit review. Please try again." });
-    } finally {
-      setLoading(false);
     }
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+    mutation.mutate(formData);
   };
 
   return (
@@ -282,16 +281,16 @@ const AddReview = () => {
               type="button"
               onClick={() => navigate("/student/home")}
               className="btn-secondary"
-              disabled={loading}
+              disabled={mutation.isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={mutation.isPending}
               className="btn-primary inline-flex items-center space-x-2"
             >
-              {loading ? (
+              {mutation.isPending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Submitting...</span>
