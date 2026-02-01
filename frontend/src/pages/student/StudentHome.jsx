@@ -12,58 +12,24 @@ const StudentHome = () => {
   const [selectedType, setSelectedType] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Mock data for demonstration
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockReviews = [
-        {
-          id: "1",
-          company_name: "Google",
-          role: "Software Engineer",
-          type: "on-campus",
-          level: "hard",
-          steps:
-            "Applied through campus portal, had 4 rounds: Online test, Technical interview 1, Technical interview 2, HR interview.",
-          tips: "Focus on data structures and algorithms. Practice coding problems on LeetCode.",
-          likes: 24,
-          views: 156,
-          created_at: "2024-01-15",
-          author: "John Doe",
-        },
-        {
-          id: "2",
-          company_name: "Microsoft",
-          role: "Full Stack Developer",
-          type: "off-campus",
-          level: "medium",
-          steps:
-            "Applied through LinkedIn, completed online assessment, had 2 technical interviews and 1 behavioral interview.",
-          tips: "Prepare for system design questions and have projects to showcase.",
-          likes: 18,
-          views: 89,
-          created_at: "2024-01-12",
-          author: "Jane Smith",
-        },
-        {
-          id: "3",
-          company_name: "Amazon",
-          role: "Cloud Engineer",
-          type: "on-campus",
-          level: "hard",
-          steps:
-            "Campus drive with online test, 2 coding rounds, and 1 behavioral round.",
-          tips: "Study AWS services and cloud architecture. Practice leadership principles.",
-          likes: 31,
-          views: 203,
-          created_at: "2024-01-10",
-          author: "Mike Johnson",
-        },
-      ];
-      setReviews(mockReviews);
-      setFilteredReviews(mockReviews);
-      setLoading(false);
-    }, 1000);
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/reviews');
+        if (!response.ok) {
+          throw new Error('Failed to fetch reviews');
+        }
+        const data = await response.json();
+        setReviews(data);
+        setFilteredReviews(data);
+      } catch (error) {
+        console.error("Error fetching reviews:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
   }, []);
 
   useEffect(() => {
@@ -228,7 +194,7 @@ const StudentHome = () => {
 
             <div className="flex items-center justify-between">
               <span className="text-sm text-secondary-500">
-                by {review.author}
+                {/* Author removed as per request */}
               </span>
               <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
                 Read More

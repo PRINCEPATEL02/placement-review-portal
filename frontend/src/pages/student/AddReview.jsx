@@ -69,11 +69,24 @@ const AddReview = () => {
     setLoading(true);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error("No authorization token found");
+      }
 
-      // In a real app, this would be an API call
-      console.log("Submitting review:", formData);
+      const response = await fetch('http://localhost:5000/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit review');
+      }
 
       // Show success message and redirect
       navigate("/student/home", {
@@ -83,7 +96,7 @@ const AddReview = () => {
       });
     } catch (error) {
       console.error("Error submitting review:", error);
-      setErrors({ submit: "Failed to submit review. Please try again." });
+      setErrors({ submit: error.message || "Failed to submit review. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -184,8 +197,8 @@ const AddReview = () => {
                 className={`input-field ${errors.type ? "border-red-300 focus:ring-red-500" : ""}`}
               >
                 <option value="">Select placement type</option>
-                <option value="on-campus">On Campus</option>
-                <option value="off-campus">Off Campus</option>
+                <option value="on campus">On Campus</option>
+                <option value="off campus">Off Campus</option>
               </select>
               {errors.type && (
                 <p className="mt-1 text-sm text-red-600">{errors.type}</p>
@@ -294,7 +307,7 @@ const AddReview = () => {
       </div>
 
       {/* Guidelines */}
-      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+      < div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6" >
         <h3 className="text-lg font-semibold text-blue-900 mb-3">
           Review Guidelines
         </h3>
@@ -305,9 +318,16 @@ const AddReview = () => {
           <li>• Mention any specific skills or technologies tested</li>
           <li>• Keep the content appropriate and professional</li>
         </ul>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
+
+/* 
+   We need to update the handleSubmit function entirely, but replace_file_content works on chunks. 
+   I will target the handleSubmit function logic specifically.
+   Actually, the user has simulation code inside handleSubmit. 
+   I will use multi-replacement or just replace the function body.
+*/
 
 export default AddReview;

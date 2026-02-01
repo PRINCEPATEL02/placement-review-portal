@@ -103,12 +103,16 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
 
         {/* Metadata */}
         <div className="flex items-center justify-between text-xs text-gray-500 mb-4 border-b border-gray-50 pb-4">
-          <div className="flex items-center space-x-3">
-            <span className="flex items-center gap-1">
-              <User className="h-3.5 w-3.5" /> {review.author || "Anonymous"}
-            </span>
+          <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" /> {formatDate(review.created_at || review.date_time)}
+            </span>
+            <span className="font-medium text-gray-600">
+              Created by: <span className="text-gray-500 font-normal">
+                {review.author && review.author !== review.enrollment
+                  ? `${review.author} (${review.enrollment})`
+                  : (review.enrollment || 'Anonymous')}
+              </span>
             </span>
           </div>
           <span className={`px-2 py-0.5 rounded text-xs font-medium border ${getTypeColor(review.type)}`}>
@@ -134,6 +138,17 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
                 {isExpanded ? review.tips : truncateText(review.tips)}
               </p>
             </div>
+          )}
+        </div>
+      </div>
+
+      {/* Admin/Creator Info */}
+      <div className="px-6 py-2 text-xs text-gray-500 border-t border-gray-50 bg-gray-50/50">
+        <div className="flex flex-col gap-1">
+          {review.approved_by_email && (
+            <span className="font-medium text-gray-600">
+              Approved by: <span className="text-gray-500 font-normal">{review.approved_by_email}</span>
+            </span>
           )}
         </div>
       </div>

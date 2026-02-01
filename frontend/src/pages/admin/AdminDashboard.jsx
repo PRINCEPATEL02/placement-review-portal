@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Users,
   FileText,
@@ -19,47 +20,57 @@ const AdminDashboard = () => {
     totalLikes: 0,
     recentActivity: [],
   });
+  const [topReviews, setTopReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching dashboard stats
-    setTimeout(() => {
-      setStats({
-        totalUsers: 245,
-        totalReviews: 89,
-        pendingReviews: 12,
-        totalViews: 15420,
-        totalLikes: 892,
-        recentActivity: [
-          {
-            id: 1,
-            type: "review_submitted",
-            message: "New review submitted by John Doe for Google",
-            timestamp: "2024-01-15T10:30:00Z",
-          },
-          {
-            id: 2,
-            type: "review_approved",
-            message: "Review for Microsoft approved",
-            timestamp: "2024-01-15T09:15:00Z",
-          },
-          {
-            id: 3,
-            type: "user_registered",
-            message: "New user Jane Smith registered",
-            timestamp: "2024-01-15T08:45:00Z",
-          },
-          {
-            id: 4,
-            type: "review_submitted",
-            message: "New review submitted by Mike Johnson for Amazon",
-            timestamp: "2024-01-14T16:20:00Z",
-          },
-        ],
-      });
-      setLoading(false);
-    }, 1000);
+    fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // Fetch all reviews (admin view)
+      const reviewsRes = await axios.get('http://localhost:5000/api/reviews?admin=true', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const reviews = reviewsRes.data;
+
+      // Calculate stats
+      const totalReviews = reviews.length;
+      const pendingReviews = reviews.filter(r => r.status === 'pending').length;
+      const totalLikes = reviews.reduce((sum, r) => sum + (r.likes || 0), 0);
+      // views are not in schema effectively yet, defaulting to 0 or mock logic. Schema has likes.
+      const totalViews = reviews.reduce((sum, r) => sum + (r.views || 0), 0);
+
+      // Generate recent activity from reviews
+      const recentActivity = reviews.slice(0, 5).map(r => ({
+        id: r._id,
+        type: r.status === 'pending' ? 'review_submitted' : 'review_approved',
+        message: `Review for ${r.company_name} by ${r.author} is ${r.status}`,
+        timestamp: r.created_at
+      }));
+
+      setStats({
+        totalUsers: 0, // No endpoint for this yet
+        totalReviews,
+        pendingReviews,
+        totalViews,
+        totalLikes,
+        recentActivity
+      });
+
+      // Store fetched reviews for Top Performing section locally? 
+      // AdminDashboard structure uses `stats` object mostly. 
+      // I will add a `topReviews` property to state to render the table.
+      setTopReviews(reviews.sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5));
+
+    } catch (err) {
+      console.error("Dashboard stats error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getActivityIcon = (type) => {
     switch (type) {
@@ -249,66 +260,39 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-secondary-200">
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="text-sm font-medium text-secondary-900">
-                      Google
+              {topReviews.map((review) => (
+                <tr key={review._id || review.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-secondary-900">
+                        {review.company_name}
+                      </div>
+                      <div className="text-sm text-secondary-500">
+                        {review.role}
+                      </div>
                     </div>
-                    <div className="text-sm text-secondary-500">
-                      Software Engineer
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
+                    <div>{review.author}</div>
+                    <div className="text-xs text-secondary-500">{review.enrollment || 'N/A'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-4 text-sm">
+                      <div className="flex items-center space-x-1">
+                        <Eye className="h-4 w-4 text-secondary-400" />
+                        <span>{review.views || 0}</span>
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <ThumbsUp className="h-4 w-4 text-secondary-400" />
+                        <span>{review.likes || 0}</span>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
-                  John Doe
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="h-4 w-4 text-secondary-400" />
-                      <span>156</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <ThumbsUp className="h-4 w-4 text-secondary-400" />
-                      <span>24</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                  Jan 15, 2024
-                </td>
-              </tr>
-              <tr>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="text-sm font-medium text-secondary-900">
-                      Amazon
-                    </div>
-                    <div className="text-sm text-secondary-500">
-                      Cloud Engineer
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
-                  Mike Johnson
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center space-x-4 text-sm">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="h-4 w-4 text-secondary-400" />
-                      <span>203</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <ThumbsUp className="h-4 w-4 text-secondary-400" />
-                      <span>31</span>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
-                  Jan 10, 2024
-                </td>
-              </tr>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-secondary-500">
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

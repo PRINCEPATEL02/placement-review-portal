@@ -1,30 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail } from 'lucide-react';
-import ReCAPTCHA from "react-google-recaptcha";
+import { Lock, User, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
-    const [email, setEmail] = useState('');
+    const [enrollment, setEnrollment] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const [captchaToken, setCaptchaToken] = useState(null);
-    const { login } = useAuth();
+    const [showPassword, setShowPassword] = useState(false);
+    const { user, login } = useAuth();
     const navigate = useNavigate();
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (user) {
+            navigate(user.role === 'admin' ? '/admin' : '/', { replace: true });
+        }
+    }, [user, navigate]);
+
+    // Prevent rendering if user is logged in
+    if (user) return null;
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
-        if (!captchaToken) {
-            setError("Please verify you are human.");
-            return;
-        }
-
         try {
-            const user = await login(email, password);
-            if (user.role === 'admin') navigate('/admin');
-            else navigate('/');
+            const loggedInUser = await login(enrollment, password);
+            if (loggedInUser.role === 'admin') navigate('/admin', { replace: true });
+            else navigate('/', { replace: true });
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         }
@@ -43,15 +47,15 @@ const Login = () => {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Enrollment Number</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-3.5 text-gray-400" size={18} />
+                                <User className="absolute left-3 top-3.5 text-gray-400" size={18} />
                                 <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    type="text"
+                                    value={enrollment}
+                                    onChange={(e) => setEnrollment(e.target.value)}
                                     className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400 text-sm"
-                                    placeholder="student@vgecg.ac.in"
+                                    placeholder="230170116055"
                                     required
                                 />
                             </div>
@@ -65,22 +69,24 @@ const Login = () => {
                             <div className="relative">
                                 <Lock className="absolute left-3 top-3.5 text-gray-400" size={18} />
                                 <input
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-3 rounded-md border border-gray-300 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400 text-sm"
+                                    className="w-full pl-10 pr-10 py-3 rounded-md border border-gray-300 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400 text-sm"
                                     placeholder="••••••••"
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
                             </div>
                         </div>
 
-                        <div className="flex justify-center mt-4">
-                            <ReCAPTCHA
-                                sitekey={import.meta.env.VITE_RECAPTCHA_SITE_KEY}
-                                onChange={(token) => setCaptchaToken(token)}
-                            />
-                        </div>
+
 
                         <button type="submit" className="w-full bg-vgec-orange hover:bg-orange-700 text-white font-bold py-3 rounded-md shadow-md transition-all hover:-translate-y-0.5 mt-2">
                             Sign In

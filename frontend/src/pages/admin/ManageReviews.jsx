@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Search,
   Filter,
@@ -19,63 +20,21 @@ const ManageReviews = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate fetching reviews
-    setTimeout(() => {
-      const mockReviews = [
-        {
-          id: "1",
-          company_name: "Google",
-          role: "Software Engineer",
-          type: "on-campus",
-          level: "hard",
-          steps:
-            "Applied through campus portal, had 4 rounds: Online test, Technical interview 1, Technical interview 2, HR interview.",
-          tips: "Focus on data structures and algorithms. Practice coding problems on LeetCode.",
-          author: "John Doe",
-          enrollment: "CS2021001",
-          status: "approved",
-          created_at: "2024-01-15",
-          likes: 24,
-          views: 156,
-        },
-        {
-          id: "2",
-          company_name: "Microsoft",
-          role: "Full Stack Developer",
-          type: "off-campus",
-          level: "medium",
-          steps:
-            "Applied through LinkedIn, completed online assessment, had 2 technical interviews and 1 behavioral interview.",
-          tips: "Prepare for system design questions and have projects to showcase.",
-          author: "Jane Smith",
-          enrollment: "CS2021002",
-          status: "pending",
-          created_at: "2024-01-12",
-          likes: 18,
-          views: 89,
-        },
-        {
-          id: "3",
-          company_name: "Amazon",
-          role: "Cloud Engineer",
-          type: "on-campus",
-          level: "hard",
-          steps:
-            "Campus drive with online test, 2 coding rounds, and 1 behavioral round.",
-          tips: "Study AWS services and cloud architecture. Practice leadership principles.",
-          author: "Mike Johnson",
-          enrollment: "CS2021003",
-          status: "rejected",
-          created_at: "2024-01-10",
-          likes: 31,
-          views: 203,
-        },
-      ];
-      setReviews(mockReviews);
-      setFilteredReviews(mockReviews);
-      setLoading(false);
-    }, 1000);
+    fetchReviews();
   }, []);
+
+  const fetchReviews = async () => {
+    try {
+      // Fetch all reviews (admin=true to get pending ones too)
+      const res = await axios.get('http://localhost:5000/api/reviews?admin=true');
+      setReviews(res.data);
+      setFilteredReviews(res.data);
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let filtered = reviews;
@@ -83,11 +42,9 @@ const ManageReviews = () => {
     if (searchTerm) {
       filtered = filtered.filter(
         (review) =>
-          review.company_name
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
+          review.company_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           review.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          review.author.toLowerCase().includes(searchTerm.toLowerCase()),
+          (review.author && review.author.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -99,18 +56,44 @@ const ManageReviews = () => {
   }, [searchTerm, statusFilter, reviews]);
 
   const handleStatusChange = async (reviewId, newStatus) => {
-    // Simulate API call
-    setReviews((prev) =>
-      prev.map((review) =>
-        review.id === reviewId ? { ...review, status: newStatus } : review,
-      ),
-    );
+    const token = localStorage.getItem('token');
+    try {
+      if (newStatus === 'approved') {
+        await axios.put(`http://localhost:5000/api/reviews/${reviewId}/approve`, {}, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } else {
+        // Use generic update for rejection or other statuses
+        await axios.put(`http://localhost:5000/api/reviews/${reviewId}`, { status: newStatus }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      }
+
+      // Optimistic update
+      setReviews((prev) =>
+        prev.map((review) =>
+          review._id === reviewId ? { ...review, status: newStatus } : review
+        )
+      );
+    } catch (err) {
+      console.error("Error updating status:", err);
+      alert(`Failed to update status: ${err.response?.data?.message || err.message}`);
+      fetchReviews(); // Revert changes by re-fetching
+    }
   };
 
   const handleDelete = async (reviewId) => {
     if (window.confirm("Are you sure you want to delete this review?")) {
-      // Simulate API call
-      setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+      const token = localStorage.getItem('token');
+      try {
+        await axios.delete(`http://localhost:5000/api/reviews/${reviewId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setReviews((prev) => prev.filter((review) => review._id !== reviewId));
+      } catch (err) {
+        console.error("Error deleting review:", err);
+        alert("Failed to delete review");
+      }
     }
   };
 
@@ -219,7 +202,7 @@ const ManageReviews = () => {
             </thead>
             <tbody className="bg-white divide-y divide-secondary-200">
               {filteredReviews.map((review) => (
-                <tr key={review.id} className="hover:bg-secondary-50">
+                <tr key={review._id || review.id} className="hover:bg-secondary-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div>
                       <div className="text-sm font-medium text-secondary-900">
@@ -275,7 +258,7 @@ const ManageReviews = () => {
                         <>
                           <button
                             onClick={() =>
-                              handleStatusChange(review.id, "approved")
+                              handleStatusChange(review._id, "approved")
                             }
                             className="text-green-600 hover:text-green-900 p-1"
                             title="Approve"
@@ -284,7 +267,7 @@ const ManageReviews = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleStatusChange(review.id, "rejected")
+                              handleStatusChange(review._id, "rejected")
                             }
                             className="text-red-600 hover:text-red-900 p-1"
                             title="Reject"
@@ -295,7 +278,7 @@ const ManageReviews = () => {
                       )}
 
                       <button
-                        onClick={() => handleDelete(review.id)}
+                        onClick={() => handleDelete(review._id)}
                         className="text-red-600 hover:text-red-900 p-1"
                         title="Delete"
                       >
@@ -361,6 +344,14 @@ const ManageReviews = () => {
                     </label>
                     <p className="text-secondary-900">
                       {selectedReview.author}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700">
+                      Enrollment
+                    </label>
+                    <p className="text-secondary-900">
+                      {selectedReview.enrollment || 'N/A'}
                     </p>
                   </div>
                   <div>

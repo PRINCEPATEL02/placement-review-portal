@@ -1,15 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Check, X, Trash2, Shield, AlertCircle, Edit2 } from 'lucide-react';
 
 const Dashboard = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { user } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
+        if (user && user.role !== 'admin') {
+            alert("Unauthorized: You must be an admin to view this page.");
+            navigate('/');
+        }
         fetchReviews();
-    }, []);
+    }, [user, navigate]);
 
     const fetchReviews = async () => {
         try {
@@ -25,12 +32,14 @@ const Dashboard = () => {
     const handleApprove = async (id) => {
         const token = localStorage.getItem('token');
         try {
+            console.log("Approving with token:", token ? "Present" : "Missing");
             await axios.put(`http://localhost:5000/api/reviews/${id}/approve`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchReviews();
         } catch (err) {
-            alert('Error approving review');
+            console.error("Approve error:", err);
+            alert(`Error approving review: ${err.response?.data?.message || err.message}`);
         }
     };
 
@@ -43,7 +52,8 @@ const Dashboard = () => {
             });
             fetchReviews();
         } catch (err) {
-            alert('Error deleting review');
+            console.error("Delete error:", err);
+            alert(`Error deleting review: ${err.response?.data?.message || err.message}`);
         }
     };
 
@@ -54,9 +64,15 @@ const Dashboard = () => {
 
     return (
         <div className="max-w-6xl mx-auto">
-            <h1 className="text-3xl font-bold mb-8 text-vgec-blue flex items-center gap-2 font-serif">
-                <Shield className="text-vgec-orange" /> Admin Dashboard
-            </h1>
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-3xl font-bold text-vgec-blue flex items-center gap-2 font-serif">
+                    <Shield className="text-vgec-orange" /> Admin Dashboard
+                </h1>
+                <div className="text-right text-sm text-gray-600 bg-gray-50 p-2 rounded border border-gray-200">
+                    <p>Logged in as: <span className="font-bold">{user?.enrollment}</span></p>
+                    <p>Role: <span className={`font-bold uppercase ${user?.role === 'admin' ? 'text-green-600' : 'text-red-500'}`}>{user?.role}</span></p>
+                </div>
+            </div>
 
             {/* Pending Reviews Section */}
             <div className="mb-12">
@@ -115,7 +131,10 @@ const AdminReviewCard = ({ review, onApprove, onDelete, isPending }) => (
                 <div className="flex gap-4 text-xs text-gray-400 mt-3 border-t border-gray-100 pt-2">
                     <span>{review.type}</span>
                     <span>{new Date(review.created_at || review.date_time).toLocaleDateString()}</span>
-                    <span>Auth: {review.author}</span>
+                    <span>
+                        Created by: <span className="font-semibold text-gray-600">{review.author || review.enrollment}</span>
+                        {review.author && review.author !== review.enrollment && <span className="text-gray-400"> ({review.enrollment})</span>}
+                    </span>
                 </div>
             </div>
 

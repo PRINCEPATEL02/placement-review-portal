@@ -9,6 +9,8 @@ const PostSchema = new mongoose.Schema({
   tips: { type: String },
   comments: { type: String },
   author: { type: String }, // User's name or enrollment
+  enrollment: { type: String }, // User's Enrollment Number
+  approved_by_email: { type: String }, // Admin's Email ID
   created_at: { type: Date, default: Date.now },
   likes: { type: Number, default: 0 },
   likedBy: [{ type: String }], // Array of enrollment numbers

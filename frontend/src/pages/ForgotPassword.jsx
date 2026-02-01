@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState('');
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Mock functionality
-        setSubmitted(true);
+        setLoading(true);
+        try {
+            await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+            setSubmitted(true);
+        } catch (err) {
+            alert(err.response?.data?.message || 'Error processing request');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -25,7 +34,7 @@ const ForgotPassword = () => {
                 {submitted ? (
                     <div className="bg-green-50 text-green-700 p-6 rounded-xl text-center">
                         <p className="font-semibold mb-2">Check your email</p>
-                        <p className="text-sm">We've sent a password reset link to {email}.</p>
+                        <p className="text-sm">We've sent your new credentials (temporary password) to {email}.</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -40,12 +49,22 @@ const ForgotPassword = () => {
                                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
                                     placeholder="student@example.com"
                                     required
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
 
-                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-lg shadow-blue-500/30 transition-all hover:-translate-y-1">
-                            Send Reset Link
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full text-white font-semibold py-3 rounded-lg shadow-lg transition-all ${loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:-translate-y-1 shadow-blue-500/30'}`}
+                        >
+                            {loading ? (
+                                <span className="flex items-center justify-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                                    Sending...
+                                </span>
+                            ) : "Send Reset Link"}
                         </button>
                     </form>
                 )}

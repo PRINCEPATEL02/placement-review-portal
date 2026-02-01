@@ -1,6 +1,8 @@
 const Post = require('../models/Post');
 const User = require('../models/User');
+const Login = require('../models/Login');
 
+// Create Review (Student)
 // Create Review (Student)
 exports.createReview = async (req, res) => {
     const { company_name, role, type, steps, level, tips, comments } = req.body;
@@ -12,7 +14,11 @@ exports.createReview = async (req, res) => {
     try {
         // Fetch user to get name
         const user = await User.findOne({ enrollment: req.user.enrollment });
-        const authorName = user ? `${user.first_name} ${user.last_name}` : req.user.enrollment;
+
+        let createby = req.user.enrollment; // Default to enrollment number
+        if (user && user.first_name && user.last_name) {
+            createby = `${user.first_name} ${user.last_name}`;
+        }
 
         const newPost = new Post({
             company_name,
@@ -22,7 +28,8 @@ exports.createReview = async (req, res) => {
             level,
             tips,
             comments,
-            author: authorName,
+            author: createby, // Fixed: Schema field is 'author', not 'createdby'
+            enrollment: req.user.enrollment, // Save enrollment
             status: 'pending'
         });
 
@@ -56,7 +63,26 @@ exports.getReviews = async (req, res) => {
             query = {}; // Admin sees all
         }
 
-        const posts = await Post.find(query).sort({ created_at: -1 });
+        const posts = await Post.find(query).sort({ created_at: -1 }).lean(); // Use lean to allow modification
+
+        // Dynamically populate author names for existing records
+        const enrollments = posts.map(p => p.enrollment).filter(e => e);
+        if (enrollments.length > 0) {
+            const users = await User.find({ enrollment: { $in: enrollments } }).select('enrollment first_name last_name');
+            const userMap = {};
+            users.forEach(u => {
+                userMap[u.enrollment] = `${u.first_name} ${u.last_name}`;
+            });
+
+            // Update author field in the response if a valid name is found
+            posts.forEach(post => {
+                if (post.enrollment && userMap[post.enrollment]) {
+                    post.author = userMap[post.enrollment];
+                }
+                // If post.author is still missing/undefined, frontend handles fallback to enrollment
+            });
+        }
+
         console.log(`Found ${posts.length} reviews.`);
         res.json(posts);
     } catch (err) {
@@ -66,16 +92,38 @@ exports.getReviews = async (req, res) => {
 };
 
 // Approve Review (Admin)
+// Approve Review (Admin)
+// Approve Review (Admin)
 exports.approveReview = async (req, res) => {
     console.log(`Approving Review ID: ${req.params.id}`);
+    console.log('User requesting approval:', req.user);
+
     try {
-        const post = await Post.findByIdAndUpdate(req.params.id, { status: 'approved' }, { new: true });
+        let approvedByName = 'Admin';
+
+        if (req.user && req.user.enrollment) {
+            // Fetch Admin User Profile to get Name
+            const adminUser = await User.findOne({ enrollment: req.user.enrollment });
+
+            if (adminUser && adminUser.first_name && adminUser.last_name) {
+                approvedByName = `${adminUser.first_name} ${adminUser.last_name}`;
+            } else {
+                approvedByName = req.user.enrollment;
+            }
+        }
+
+        const post = await Post.findByIdAndUpdate(req.params.id, {
+            status: 'approved',
+            approved_by_email: approvedByName
+        }, { new: true });
+
         if (!post) return res.status(404).json({ message: 'Review not found' });
-        console.log("Review Approved");
+
+        console.log("Review Approved by:", approvedByName);
         res.json({ message: 'Review approved', post });
     } catch (err) {
         console.error("Approve Review Error:", err);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error', error: err.message });
     }
 };
 

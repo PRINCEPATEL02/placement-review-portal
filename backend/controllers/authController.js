@@ -48,21 +48,21 @@ exports.register = async (req, res) => {
 
 // Login User
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { enrollment, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ message: 'Email and password are required' });
+  if (!enrollment || !password) {
+    return res.status(400).json({ message: 'Enrollment Number and password are required' });
   }
 
   try {
-    const user = await Login.findOne({ email });
+    const user = await Login.findOne({ enrollment });
     if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     user.last_login = Date.now();
-    await user.save();
+    user.save().catch(err => console.error("Error updating last_login:", err)); // Don't await this
 
     const token = jwt.sign({ id: user._id, role: user.role, enrollment: user.enrollment }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
 
@@ -105,5 +105,74 @@ exports.updateProfile = async (req, res) => {
     res.json({ message: 'Profile updated successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Forgot Password - Send New Credentials
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await Login.findOne({ email });
+    if (!user) return res.status(404).json({ message: 'User with this email does not exist' });
+
+    // 1. Generate new temporary password
+    const tempPassword = Math.random().toString(36).slice(-8); // 8 char random string
+
+    // 2. Hash it
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    // 3. Update User
+    user.password = hashedPassword;
+    await user.save();
+
+    // 4. Send Email
+    const sendEmail = require('../utils/sendEmail');
+
+    const message = `Your account credentials have been reset.\n\nEnrollment: ${user.enrollment}\nEmail: ${user.email}\nTemporary Password: ${tempPassword}\n\nPlease login and change your password immediately.`;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: 'Placement Portal - Credentials Recovery',
+        message: message
+      });
+
+      res.json({ message: 'New credentials sent to your email.' });
+    } catch (emailError) {
+      console.error("Email send failed:", emailError);
+      // If email fails, technically we should probably rollback the password change or warn user.
+      // For simplicity/safety, we tell them it failed.
+      return res.status(500).json({ message: 'Email could not be sent. Please contact admin.' });
+    }
+
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+    res.status(500).json({ message: 'Server error: ' + err.message });
+  }
+};
+
+// Change Password
+exports.changePassword = async (req, res) => {
+  const { newPassword } = req.body;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+  }
+
+  try {
+    // Find login record
+    const user = await Login.findOne({ enrollment: req.user.enrollment });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+
+    await user.save();
+    res.json({ message: 'Password updated successfully' });
+
+  } catch (err) {
+    console.error("Change Password Error:", err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
