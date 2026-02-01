@@ -49,19 +49,19 @@ const AddUser = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto">
+        <div className="w-full max-w-2xl mx-auto px-4 md:px-0">
             <div className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-                <div className="bg-vgec-blue py-6 px-8 flex justify-between items-center text-white">
+                <div className="bg-vgec-blue py-6 px-6 md:px-8 flex flex-col md:flex-row justify-between items-center text-white gap-4 text-center md:text-left">
                     <div>
                         <h2 className="text-2xl font-bold font-serif">Add New User</h2>
                         <p className="text-blue-200 text-sm">Create Student or Admin accounts</p>
                     </div>
-                    <div className="bg-white/10 p-3 rounded-full">
+                    <div className="bg-white/10 p-3 rounded-full hidden md:block">
                         <User size={24} />
                     </div>
                 </div>
 
-                <div className="p-8">
+                <div className="p-6 md:p-8">
                     {message && (
                         <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 flex items-center gap-2 border border-green-100 animate-in fade-in slide-in-from-top-2">
                             <CheckCircle size={20} /> {message}
@@ -74,8 +74,8 @@ const AddUser = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="col-span-2">
+                    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Enrollment / Employee ID</label>
                             <div className="relative">
                                 <Shield className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -90,7 +90,7 @@ const AddUser = () => {
                             </div>
                         </div>
 
-                        <div>
+                        <div className="col-span-1">
                             <label className="block text-sm font-medium text-gray-700 mb-2">First Name</label>
                             <input
                                 name="first_name"
@@ -100,7 +100,7 @@ const AddUser = () => {
                                 placeholder="First Name"
                             />
                         </div>
-                        <div>
+                        <div className="col-span-1">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
                             <input
                                 name="last_name"
@@ -111,7 +111,7 @@ const AddUser = () => {
                             />
                         </div>
 
-                        <div className="col-span-2">
+                        <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                             <div className="relative">
                                 <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -127,7 +127,7 @@ const AddUser = () => {
                             </div>
                         </div>
 
-                        <div className="col-span-2">
+                        <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -150,15 +150,15 @@ const AddUser = () => {
                             </div>
                         </div>
 
-                        <div className="col-span-2">
+                        <div className="col-span-1 md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Role Assignment</label>
-                            <div className="flex gap-4">
-                                <label className={`flex-1 p-4 border rounded-xl cursor-pointer text-center transition-all flex flex-col items-center gap-2 ${formData.role === 'student' ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <label className={`p-4 border rounded-xl cursor-pointer text-center transition-all flex flex-col items-center gap-2 ${formData.role === 'student' ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                                     <input type="radio" name="role" value="student" className="hidden" onChange={handleChange} checked={formData.role === 'student'} />
                                     <User size={24} />
                                     Student
                                 </label>
-                                <label className={`flex-1 p-4 border rounded-xl cursor-pointer text-center transition-all flex flex-col items-center gap-2 ${formData.role === 'admin' ? 'border-vgec-orange bg-orange-50 text-vgec-orange font-bold' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                                <label className={`p-4 border rounded-xl cursor-pointer text-center transition-all flex flex-col items-center gap-2 ${formData.role === 'admin' ? 'border-vgec-orange bg-orange-50 text-vgec-orange font-bold' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
                                     <input type="radio" name="role" value="admin" className="hidden" onChange={handleChange} checked={formData.role === 'admin'} />
                                     <Shield size={24} />
                                     Administrator
@@ -166,7 +166,7 @@ const AddUser = () => {
                             </div>
                         </div>
 
-                        <div className="col-span-2 mt-2">
+                        <div className="col-span-1 md:col-span-2 mt-2">
                             <button
                                 type="submit"
                                 disabled={loading}
