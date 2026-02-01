@@ -11,6 +11,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { getApiUrl } from '../../utils/apiConfig';
+import { RefreshCw } from 'lucide-react';
 
 const ManageReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -142,6 +143,17 @@ const ManageReviews = () => {
         <p className="text-secondary-600">
           Review, approve, and manage student placement experiences.
         </p>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={fetchReviews}
+          disabled={loading}
+          className="flex items-center gap-2 text-sm text-vgec-blue hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors"
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          Refresh Data
+        </button>
       </div>
 
       {/* Filters and Search */}

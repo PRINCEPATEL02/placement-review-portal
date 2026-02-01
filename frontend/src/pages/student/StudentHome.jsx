@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { Plus, Search, Filter, Star, Eye, ThumbsUp } from "lucide-react";
+import { Plus, Search, Filter, Star, Eye, ThumbsUp, RefreshCw } from "lucide-react";
 import { getApiUrl } from "../../utils/apiConfig";
 
 const StudentHome = () => {
@@ -31,7 +31,24 @@ const StudentHome = () => {
     };
 
     fetchReviews();
-  }, []);
+  }, [searchTerm, selectedLevel, selectedType]); // Re-fetch only when filters change? No, filters are client side. 
+  // We want to fetch ONCE on mount, but provide manual refresh.
+
+  const fetchReviewsManual = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(getApiUrl('/reviews'));
+      if (!response.ok) throw new Error('Failed to fetch reviews');
+      const data = await response.json();
+      setReviews(data);
+      setFilteredReviews(data); // Reset filters on fresh fetch or re-apply? 
+      // Ideally re-apply filters, but for now simple refresh.
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let filtered = reviews;
@@ -95,6 +112,15 @@ const StudentHome = () => {
           Discover placement experiences and share your journey with fellow
           students.
         </p>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={fetchReviewsManual}
+          className="flex items-center gap-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
+        >
+          <RefreshCw size={16} /> Refresh Feed
+        </button>
       </div>
 
       {/* Action Bar */}
