@@ -31,8 +31,8 @@ const Navbar = () => {
       {/* Top Branding Bar */}
       <div className="bg-white border-b border-gray-100 py-3">
         <div className="container mx-auto px-6 flex items-center gap-4">
-          <div className="h-12 w-12 bg-vgec-blue rounded-full flex items-center justify-center text-white font-bold text-xl shadow-sm">
-            V
+          <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100 p-2">
+            <img src="/favicon.ico" alt="VGEC Logo" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-vgec-blue font-serif tracking-wide">
