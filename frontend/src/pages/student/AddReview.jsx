@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { ArrowLeft, Save, AlertCircle } from "lucide-react";
+import { getApiUrl } from "../../utils/apiConfig";
 
 const AddReview = () => {
   const { user } = useAuth();
@@ -74,7 +75,7 @@ const AddReview = () => {
         throw new Error("No authorization token found");
       }
 
-      const response = await fetch('http://localhost:5000/api/reviews', {
+      const response = await fetch(getApiUrl('/reviews'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

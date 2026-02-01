@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Lock, Shield, Loader, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const AddUser = () => {
     const [formData, setFormData] = useState({
@@ -28,7 +29,7 @@ const AddUser = () => {
         try {
             const token = localStorage.getItem('token');
             // Use Admin-only endpoint to create auto-approved users
-            await axios.post('http://localhost:5000/api/auth/create-user', formData, {
+            await axios.post(getApiUrl('/auth/create-user'), formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMessage(`Successfully created ${formData.role} account for ${formData.first_name || 'User'}!`);
@@ -84,7 +85,7 @@ const AddUser = () => {
                                     value={formData.enrollment}
                                     onChange={handleChange}
                                     className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-vgec-blue focus:ring-1 focus:ring-vgec-blue outline-none transition-all placeholder-gray-400"
-                                    placeholder="e.g. 230170116055"
+                                    placeholder="e.g. 210170116010"
                                     required
                                 />
                             </div>

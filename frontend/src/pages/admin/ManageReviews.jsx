@@ -10,6 +10,7 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
+import { getApiUrl } from '../../utils/apiConfig';
 
 const ManageReviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -26,7 +27,7 @@ const ManageReviews = () => {
   const fetchReviews = async () => {
     try {
       // Fetch all reviews (admin=true to get pending ones too)
-      const res = await axios.get('http://localhost:5000/api/reviews?admin=true');
+      const res = await axios.get(getApiUrl('/reviews?admin=true'));
       setReviews(res.data);
       setFilteredReviews(res.data);
     } catch (err) {
@@ -59,12 +60,12 @@ const ManageReviews = () => {
     const token = localStorage.getItem('token');
     try {
       if (newStatus === 'approved') {
-        await axios.put(`http://localhost:5000/api/reviews/${reviewId}/approve`, {}, {
+        await axios.put(getApiUrl(`/reviews/${reviewId}/approve`), {}, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         // Use generic update for rejection or other statuses
-        await axios.put(`http://localhost:5000/api/reviews/${reviewId}`, { status: newStatus }, {
+        await axios.put(getApiUrl(`/reviews/${reviewId}`), { status: newStatus }, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }
@@ -86,7 +87,7 @@ const ManageReviews = () => {
     if (window.confirm("Are you sure you want to delete this review?")) {
       const token = localStorage.getItem('token');
       try {
-        await axios.delete(`http://localhost:5000/api/reviews/${reviewId}`, {
+        await axios.delete(getApiUrl(`/reviews/${reviewId}`), {
           headers: { Authorization: `Bearer ${token}` }
         });
         setReviews((prev) => prev.filter((review) => review._id !== reviewId));

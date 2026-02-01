@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Save, Building, Type } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const AdminEditReview = () => {
     const { id } = useParams();
@@ -19,7 +20,7 @@ const AdminEditReview = () => {
         // Let's implement fetch all and find.
         const fetchReview = async () => {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/reviews?admin=true');
+            const res = await axios.get(getApiUrl('/reviews?admin=true'));
             const review = res.data.find(r => r._id === id);
             if (review) setFormData(review);
         };
@@ -32,7 +33,7 @@ const AdminEditReview = () => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.put(`http://localhost:5000/api/reviews/${id}`, formData, {
+            await axios.put(getApiUrl(`/reviews/${id}`), formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             navigate('/admin');

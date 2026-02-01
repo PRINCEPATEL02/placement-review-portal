@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { Trash2, Edit2, AlertCircle, Building, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const MyPosts = () => {
     const [reviews, setReviews] = useState([]);
@@ -18,7 +19,7 @@ const MyPosts = () => {
         try {
             setError(null);
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/reviews/my-reviews', {
+            const res = await axios.get(getApiUrl('/reviews/my-reviews'), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setReviews(res.data);
@@ -35,7 +36,7 @@ const MyPosts = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.delete(`http://localhost:5000/api/reviews/my-reviews/${id}`, {
+            await axios.delete(getApiUrl(`/reviews/my-reviews/${id}`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             // Update UI locally

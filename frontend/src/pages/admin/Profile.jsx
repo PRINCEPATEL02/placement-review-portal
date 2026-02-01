@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { ShieldCheck, Mail, Save, Lock, Eye, EyeOff } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const AdminProfile = () => {
     const { user } = useAuth();
@@ -21,7 +22,7 @@ const AdminProfile = () => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('http://localhost:5000/api/auth/profile', {
+                const res = await axios.get(getApiUrl('/auth/profile'), {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setProfile(res.data);
@@ -38,7 +39,7 @@ const AdminProfile = () => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.put('http://localhost:5000/api/auth/profile', profile, {
+            await axios.put(getApiUrl('/auth/profile'), profile, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMsg('Admin profile updated successfully!');
@@ -65,7 +66,7 @@ const AdminProfile = () => {
             // Previous authRoutes code (Step 23) isn't fully visible but controller is.
             // Let's assume the endpoint provided in student profile works.
             // Student profile (Step 207) uses PUT 'http://localhost:5000/api/auth/change-password'
-            await axios.put('http://localhost:5000/api/auth/change-password', { newPassword }, {
+            await axios.put(getApiUrl('/auth/change-password'), { newPassword }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPassMsg('Success: Password updated successfully');

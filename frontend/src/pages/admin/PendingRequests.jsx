@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { CheckCircle, Clock, User, XCircle, Shield } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const PendingRequests = () => {
     const [requests, setRequests] = useState([]);
@@ -10,7 +11,7 @@ const PendingRequests = () => {
     const fetchRequests = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('http://localhost:5000/api/auth/pending-users', {
+            const res = await axios.get(getApiUrl('/auth/pending-users'), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setRequests(res.data);
@@ -28,7 +29,7 @@ const PendingRequests = () => {
     const handleApprove = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            await axios.put(`http://localhost:5000/api/auth/approve-user/${id}`, {}, {
+            await axios.put(getApiUrl(`/auth/approve-user/${id}`), {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMsg('User approved successfully!');
@@ -101,8 +102,8 @@ const PendingRequests = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${req.role === 'admin'
-                                                    ? 'bg-purple-100 text-purple-800'
-                                                    : 'bg-blue-100 text-blue-800'
+                                                ? 'bg-purple-100 text-purple-800'
+                                                : 'bg-blue-100 text-blue-800'
                                                 }`}>
                                                 {req.role === 'admin' ? <Shield size={12} /> : <User size={12} />}
                                                 {req.role.toUpperCase()}

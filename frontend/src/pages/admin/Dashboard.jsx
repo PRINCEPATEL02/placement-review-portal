@@ -3,6 +3,7 @@ import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Check, X, Trash2, Shield, AlertCircle, Edit2 } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const Dashboard = () => {
     const [reviews, setReviews] = useState([]);
@@ -20,7 +21,7 @@ const Dashboard = () => {
 
     const fetchReviews = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/reviews?admin=true');
+            const res = await axios.get(getApiUrl('/reviews?admin=true'));
             setReviews(res.data);
         } catch (err) {
             console.error("Failed to fetch reviews");
@@ -33,7 +34,7 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         try {
             console.log("Approving with token:", token ? "Present" : "Missing");
-            await axios.put(`http://localhost:5000/api/reviews/${id}/approve`, {}, {
+            await axios.put(getApiUrl(`/reviews/${id}/approve`), {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchReviews();
@@ -47,7 +48,7 @@ const Dashboard = () => {
         if (!window.confirm("Are you sure you want to delete this review?")) return;
         const token = localStorage.getItem('token');
         try {
-            await axios.delete(`http://localhost:5000/api/reviews/${id}`, {
+            await axios.delete(getApiUrl(`/reviews/${id}`), {
                 headers: { Authorization: `Bearer ${token}` }
             });
             fetchReviews();

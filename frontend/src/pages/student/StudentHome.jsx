@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { Plus, Search, Filter, Star, Eye, ThumbsUp } from "lucide-react";
+import { getApiUrl } from "../../utils/apiConfig";
 
 const StudentHome = () => {
   const { user } = useAuth();
@@ -15,7 +16,7 @@ const StudentHome = () => {
   useEffect(() => {
     const fetchReviews = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/reviews');
+        const response = await fetch(getApiUrl('/reviews'));
         if (!response.ok) {
           throw new Error('Failed to fetch reviews');
         }

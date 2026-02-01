@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { User, Mail, Shield, Save, Lock, Eye, EyeOff } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const Profile = () => {
     const { user } = useAuth();
@@ -21,7 +22,7 @@ const Profile = () => {
         const fetchProfile = async () => {
             const token = localStorage.getItem('token');
             try {
-                const res = await axios.get('http://localhost:5000/api/auth/profile', {
+                const res = await axios.get(getApiUrl('/auth/profile'), {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setProfile(res.data);
@@ -38,7 +39,7 @@ const Profile = () => {
         e.preventDefault();
         const token = localStorage.getItem('token');
         try {
-            await axios.put('http://localhost:5000/api/auth/profile', profile, {
+            await axios.put(getApiUrl('/auth/profile'), profile, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setMsg('Profile updated successfully!');
@@ -60,7 +61,7 @@ const Profile = () => {
 
         const token = localStorage.getItem('token');
         try {
-            await axios.put('http://localhost:5000/api/auth/change-password', { newPassword }, {
+            await axios.put(getApiUrl('/auth/change-password'), { newPassword }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setPassMsg('Success: Password updated successfully');

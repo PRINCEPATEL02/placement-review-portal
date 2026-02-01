@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Save, Send, Building, Type, List } from 'lucide-react';
+import { getApiUrl } from '../../utils/apiConfig';
 
 const Review = () => {
     const { user } = useAuth();
@@ -22,7 +23,7 @@ const Review = () => {
         e.preventDefault();
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5000/api/reviews', formData, {
+            await axios.post(getApiUrl('/reviews'), formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Review submitted for approval!');
