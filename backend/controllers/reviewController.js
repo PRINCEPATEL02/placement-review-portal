@@ -55,6 +55,19 @@ exports.updateReview = async (req, res) => {
 // Get All Reviews
 exports.getReviews = async (req, res) => {
     const isAdmin = req.query.admin === 'true';
+    const jwt = require('jsonwebtoken');
+
+    let userId = null;
+    const token = req.header('Authorization');
+    if (token) {
+        try {
+            const tokenString = token.startsWith('Bearer ') ? token.slice(7, token.length) : token;
+            const verified = jwt.verify(tokenString, process.env.JWT_SECRET || 'secret');
+            userId = verified.enrollment;
+        } catch (err) {
+            console.log("Optional Auth: Invalid token", err.message);
+        }
+    }
 
     try {
         let query = { status: 'approved' };
@@ -63,32 +76,39 @@ exports.getReviews = async (req, res) => {
         }
 
         // Optimize: Select only needed fields to reduce payload size
+        // Added 'likedBy' to selection to check isLiked status
         const posts = await Post.find(query)
-            .select('company_name role type level steps views likes created_at enrollment status author')
+            .select('company_name role type level steps views likes created_at enrollment status author likedBy')
             .sort({ created_at: -1 })
             .lean();
 
         // Dynamically populate author names
         const enrollments = [...new Set(posts.map(p => p.enrollment).filter(Boolean))];
+        let userMap = {};
 
         if (enrollments.length > 0) {
             const users = await User.find({ enrollment: { $in: enrollments } })
                 .select('enrollment first_name last_name')
                 .lean();
 
-            const userMap = users.reduce((acc, u) => {
+            userMap = users.reduce((acc, u) => {
                 acc[u.enrollment] = `${u.first_name} ${u.last_name}`;
                 return acc;
             }, {});
-
-            posts.forEach(post => {
-                if (post.enrollment && userMap[post.enrollment]) {
-                    post.author = userMap[post.enrollment];
-                }
-            });
         }
 
-        res.json(posts);
+        const processedPosts = posts.map(post => {
+            if (post.enrollment && userMap[post.enrollment]) {
+                post.author = userMap[post.enrollment];
+            }
+            // Check if current user liked the post
+            post.isLiked = userId && post.likedBy ? post.likedBy.includes(userId) : false;
+            // Optional: Remove likedBy array from response to reduce size/privacy
+            delete post.likedBy;
+            return post;
+        });
+
+        res.json(processedPosts);
     } catch (err) {
         console.error("GetReviews Error:", err);
         res.status(500).json({ message: 'Server error' });

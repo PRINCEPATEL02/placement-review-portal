@@ -12,12 +12,14 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
   const [hasLiked, setHasLiked] = useState(false);
 
   useEffect(() => {
-    if (user && review.likedBy) {
+    if (review.hasOwnProperty('isLiked')) {
+      setHasLiked(review.isLiked);
+    } else if (user && review.likedBy) {
       setHasLiked(review.likedBy.includes(user.enrollment));
     } else {
       setHasLiked(false);
     }
-  }, [user, review.likedBy]);
+  }, [user, review.likedBy, review.isLiked]);
 
   const handleLike = async () => {
     if (loading) return;
@@ -29,18 +31,22 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
       });
 
       // Update local state with new likes count and update likedBy array to keep UI consistent
+      // Crucially, update isLiked so useEffect doesn't revert the state
       const newLikedBy = res.data.liked
         ? [...(review.likedBy || []), user.enrollment]
         : (review.likedBy || []).filter(id => id !== user.enrollment);
 
+      const isLiked = res.data.liked;
+
       setReview(prev => ({
         ...prev,
         likes: res.data.likes,
-        likedBy: newLikedBy
+        likedBy: newLikedBy,
+        isLiked: isLiked
       }));
 
       // hasLiked will be updated by useEffect, but we can set it here too for speed
-      setHasLiked(res.data.liked);
+      setHasLiked(isLiked);
     } catch (err) {
       console.error("Like error", err);
     } finally {

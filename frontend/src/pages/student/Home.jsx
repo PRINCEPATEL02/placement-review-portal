@@ -10,7 +10,9 @@ const Home = () => {
     useEffect(() => {
         const fetchReviews = async () => {
             try {
-                const res = await axios.get(getApiUrl('/reviews'));
+                const token = localStorage.getItem('token');
+                const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+                const res = await axios.get(getApiUrl('/reviews'), config);
                 setReviews(res.data);
             } catch (err) {
                 console.error("Failed to fetch reviews", err);

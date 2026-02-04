@@ -2,7 +2,7 @@ import axios from "axios";
 
 const API_BASE_URL = window.location.hostname === 'localhost'
   ? "http://localhost:5000/api"
-  : "https://placement-review-portal.onrender.com/api";
+  : "https://placement-review-portal.onrender.com";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

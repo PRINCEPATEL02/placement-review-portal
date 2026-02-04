@@ -15,7 +15,9 @@ const StudentHome = () => {
   const { data: reviews = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['reviews'],
     queryFn: async () => {
-      const response = await fetch(getApiUrl('/reviews'));
+      const token = localStorage.getItem('token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      const response = await fetch(getApiUrl('/reviews'), { headers });
       if (!response.ok) {
         throw new Error('Failed to fetch reviews');
       }
@@ -49,10 +51,12 @@ const StudentHome = () => {
       queryClient.setQueryData(['reviews'], (old) => {
         return old.map(review => {
           if (review._id === reviewId) {
-            // Toggle logic simulation: if we assume user hasn't liked it yet
-            // ideally we check if user is in 'likedBy', but for simple optimistic boost we just +1
-            // Real logic requires user ID check. For now, we will just increment to show effect.
-            return { ...review, likes: review.likes + 1 };
+            const isLiked = !!review.isLiked;
+            return {
+              ...review,
+              likes: isLiked ? review.likes - 1 : review.likes + 1,
+              isLiked: !isLiked
+            };
           }
           return review;
         });
@@ -239,9 +243,9 @@ const StudentHome = () => {
                 </div>
                 <button
                   onClick={() => likeMutation.mutate(review._id || review.id)}
-                  className="flex items-center space-x-1 hover:text-primary-600 transition-colors"
+                  className={`flex items-center space-x-1 transition-colors ${review.isLiked ? "text-primary-600" : "text-secondary-500 hover:text-primary-600"}`}
                 >
-                  <ThumbsUp className={`h-4 w-4 ${review.likes > 0 ? "fill-current" : ""}`} />
+                  <ThumbsUp className={`h-4 w-4 ${review.isLiked ? "fill-current" : ""}`} />
                   <span>{review.likes}</span>
                 </button>
               </div>
