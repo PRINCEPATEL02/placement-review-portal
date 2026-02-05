@@ -73,7 +73,9 @@ const ManageReviews = () => {
       queryClient.invalidateQueries(['reviews']); // Also refresh student view if they are cached
     },
     onError: (err) => {
-      alert(`Failed to update status: ${err.message}`);
+      console.error("Mutation Error:", err);
+      const errorMessage = err.response?.data?.message || err.message || "Unknown error";
+      alert(`Failed to update status: ${errorMessage}`);
     }
   });
 
@@ -401,6 +403,17 @@ const ManageReviews = () => {
                     {selectedReview.tips}
                   </p>
                 </div>
+
+                {selectedReview.comments && (
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                      Additional Comments
+                    </label>
+                    <p className="text-secondary-700 bg-secondary-50 p-3 rounded-lg">
+                      {selectedReview.comments}
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end space-x-4 mt-6 pt-6 border-t border-secondary-200">

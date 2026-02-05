@@ -4,7 +4,7 @@ const PostSchema = new mongoose.Schema({
   company_name: { type: String, required: true },
   role: { type: String },
   type: { type: String, enum: ['off campus', 'on campus'], required: true },
-  steps: { type: String, required: true },
+  steps: { type: Object, required: true }, // Stores { aptitude, technical, hr } content
   level: { type: String, enum: ['hard', 'medium', 'easy'], required: true },
   tips: { type: String },
   comments: { type: String },

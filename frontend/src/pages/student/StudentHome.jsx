@@ -1,16 +1,18 @@
 import React, { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { Plus, Search, Filter, Star, Eye, ThumbsUp, RefreshCw } from "lucide-react";
+import { Plus, Search, RefreshCw } from "lucide-react";
 import { getApiUrl } from "../../utils/apiConfig";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import ReviewCard from "../../components/ReviewCard";
+import ReviewDetailsModal from "../../components/ReviewDetailsModal";
 
 const StudentHome = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [selectedType, setSelectedType] = useState("");
-  const queryClient = useQueryClient();
+  const [selectedReview, setSelectedReview] = useState(null);
 
   const { data: reviews = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['reviews'],
@@ -25,51 +27,6 @@ const StudentHome = () => {
     },
     refetchInterval: 5000,
     staleTime: 1000 * 30,
-  });
-
-  const likeMutation = useMutation({
-    mutationFn: async (reviewId) => {
-      const token = localStorage.getItem('token');
-      const response = await fetch(getApiUrl(`/reviews/${reviewId}/like`), {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      if (!response.ok) throw new Error('Failed to like review');
-      return response.json();
-    },
-    onMutate: async (reviewId) => {
-      // Cancel outgoing refetches
-      await queryClient.cancelQueries(['reviews']);
-
-      // Snapshot previous value
-      const previousReviews = queryClient.getQueryData(['reviews']);
-
-      // Optimistically update
-      queryClient.setQueryData(['reviews'], (old) => {
-        return old.map(review => {
-          if (review._id === reviewId) {
-            const isLiked = !!review.isLiked;
-            return {
-              ...review,
-              likes: isLiked ? review.likes - 1 : review.likes + 1,
-              isLiked: !isLiked
-            };
-          }
-          return review;
-        });
-      });
-
-      return { previousReviews };
-    },
-    onError: (err, newTodo, context) => {
-      queryClient.setQueryData(['reviews'], context.previousReviews);
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries(['reviews']);
-    },
   });
 
   const filteredReviews = useMemo(() => {
@@ -95,25 +52,6 @@ const StudentHome = () => {
 
     return filtered;
   }, [reviews, searchTerm, selectedLevel, selectedType]);
-
-  const getLevelColor = (level) => {
-    switch (level) {
-      case "easy":
-        return "bg-green-100 text-green-800";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800";
-      case "hard":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  const getTypeColor = (type) => {
-    return type === "on-campus"
-      ? "bg-blue-100 text-blue-800"
-      : "bg-purple-100 text-purple-800";
-  };
 
   if (isLoading) {
     return (
@@ -206,61 +144,11 @@ const StudentHome = () => {
       {/* Reviews Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredReviews.map((review) => (
-          <div
+          <ReviewCard
             key={review._id || review.id}
-            className="card hover:shadow-lg transition-shadow duration-200"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-semibold text-secondary-900">
-                  {review.company_name}
-                </h3>
-                <p className="text-primary-600 font-medium">{review.role}</p>
-              </div>
-              <div className="flex space-x-2">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getLevelColor(review.level)}`}
-                >
-                  {review.level}
-                </span>
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(review.type)}`}
-                >
-                  {review.type}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-secondary-600 mb-4 line-clamp-3">
-              {review.steps}
-            </p>
-
-            <div className="flex items-center justify-between text-sm text-secondary-500 mb-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-1">
-                  <Eye className="h-4 w-4" />
-                  <span>{review.views}</span>
-                </div>
-                <button
-                  onClick={() => likeMutation.mutate(review._id || review.id)}
-                  className={`flex items-center space-x-1 transition-colors ${review.isLiked ? "text-primary-600" : "text-secondary-500 hover:text-primary-600"}`}
-                >
-                  <ThumbsUp className={`h-4 w-4 ${review.isLiked ? "fill-current" : ""}`} />
-                  <span>{review.likes}</span>
-                </button>
-              </div>
-              <span>{new Date(review.created_at).toLocaleDateString()}</span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-secondary-500">
-                {/* Author removed as per request */}
-              </span>
-              <button className="text-primary-600 hover:text-primary-700 font-medium text-sm">
-                Read More
-              </button>
-            </div>
-          </div>
+            review={review}
+            onViewMore={setSelectedReview}
+          />
         ))}
       </div>
 
@@ -276,6 +164,14 @@ const StudentHome = () => {
             Try adjusting your search or filter criteria.
           </p>
         </div>
+      )}
+
+      {/* Review Details Modal */}
+      {selectedReview && (
+        <ReviewDetailsModal
+          review={selectedReview}
+          onClose={() => setSelectedReview(null)}
+        />
       )}
     </div>
   );

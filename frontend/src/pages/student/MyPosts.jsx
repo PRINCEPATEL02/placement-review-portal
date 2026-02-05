@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { Trash2, Edit2, AlertCircle, Building, Clock } from 'lucide-react';
+import { Trash2, AlertCircle, Building, Clock, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getApiUrl } from '../../utils/apiConfig';
+import ReviewDetailsModal from '../../components/ReviewDetailsModal';
 
 const MyPosts = () => {
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user } = useAuth();
+    const [selectedReview, setSelectedReview] = useState(null);
 
     useEffect(() => {
         fetchMyReviews();
@@ -81,57 +83,116 @@ const MyPosts = () => {
             ) : (
                 <div className="space-y-6">
                     {reviews.map(review => (
-                        <div key={review._id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md">
-                            <div className="flex justify-between items-start">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <h3 className="text-xl font-bold text-vgec-blue flex items-center gap-2">
-                                            <Building className="h-5 w-5 text-vgec-orange" />
-                                            {review.company_name}
-                                        </h3>
-                                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${review.status === 'approved' ? 'bg-green-100 text-green-700' :
-                                            review.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            {review.status}
-                                        </span>
-                                    </div>
-                                    <p className="text-gray-600 font-medium mb-1">{review.role} ({review.type})</p>
-                                    <div className="text-sm text-gray-500 flex items-center gap-2 mb-4">
-                                        <Clock size={14} />
-                                        {new Date(review.created_at).toLocaleDateString()}
-                                    </div>
-
-                                    <div className="mb-3">
-                                        <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Steps</h4>
-                                        <p className="text-gray-700 text-sm line-clamp-2 md:line-clamp-none">{review.steps}</p>
-                                    </div>
-
-                                    {review.tips && (
-                                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-3">
-                                            <h4 className="text-xs font-bold text-vgec-orange uppercase mb-1">Tips</h4>
-                                            <p className="text-gray-700 text-sm italic">{review.tips}</p>
-                                        </div>
-                                    )}
-
-                                    {review.status === 'approved' && review.approved_by_email && (
-                                        <div className="text-xs text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded-lg mt-3 inline-block">
-                                            <span className="font-semibold">Approved by:</span> {review.approved_by_email}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="ml-4 flex flex-col gap-2">
-                                    <button
-                                        onClick={() => handleDelete(review._id)}
-                                        className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors group"
-                                        title="Delete Review"
-                                    >
-                                        <Trash2 size={20} className="group-hover:scale-110 transition-transform" />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <ReviewItem
+                            key={review._id}
+                            review={review}
+                            handleDelete={handleDelete}
+                            onViewMore={setSelectedReview}
+                        />
                     ))}
+                </div>
+            )}
+
+            {/* Review Details Modal */}
+            {selectedReview && (
+                <ReviewDetailsModal
+                    review={selectedReview}
+                    onClose={() => setSelectedReview(null)}
+                />
+            )}
+        </div>
+    );
+};
+
+const ReviewItem = ({ review, handleDelete, onViewMore }) => {
+    const renderStepsPreview = (steps) => {
+        if (!steps) return <span className="text-gray-400 italic">No details.</span>;
+
+        // Handle object
+        if (typeof steps === 'object') {
+            const rounds = Object.keys(steps).filter(k => steps[k]);
+            if (rounds.length === 0) return <span className="text-gray-400 italic">No details.</span>;
+
+            const firstRound = rounds[0];
+            const text = steps[firstRound];
+            const truncated = text.length > 100 ? text.substring(0, 100) + '...' : text;
+
+            return (
+                <span className="text-gray-700 text-sm">
+                    <span className="font-semibold capitalize text-gray-800">{firstRound}:</span> {truncated}
+                    {rounds.length > 1 && <span className="text-xs text-gray-500 ml-1">(+{rounds.length - 1} more)</span>}
+                </span>
+            );
+        }
+
+        // Handle string
+        const truncated = steps.length > 150 ? steps.substring(0, 150) + '...' : steps;
+        return <p className="text-gray-700 text-sm whitespace-pre-wrap">{truncated}</p>;
+    };
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 transition-all hover:shadow-md h-full flex flex-col">
+            <div className="flex justify-between items-start mb-4">
+                <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold text-vgec-blue flex items-center gap-2">
+                            <Building className="h-5 w-5 text-vgec-orange" />
+                            {review.company_name}
+                        </h3>
+                        <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${review.status === 'approved' ? 'bg-green-100 text-green-700' :
+                            review.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'
+                            }`}>
+                            {review.status}
+                        </span>
+                    </div>
+                    <p className="text-gray-600 font-medium mb-1">{review.role} ({review.type})</p>
+                    <div className="text-sm text-gray-500 flex items-center gap-2">
+                        <Clock size={14} />
+                        {new Date(review.created_at).toLocaleDateString()}
+                    </div>
+                </div>
+
+                <div className="ml-4 flex flex-col gap-2">
+                    <button
+                        onClick={() => handleDelete(review._id)}
+                        className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors group"
+                        title="Delete Review"
+                    >
+                        <Trash2 size={20} className="group-hover:scale-110 transition-transform" />
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex-1 space-y-4">
+                <div>
+                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Steps</h4>
+                    {renderStepsPreview(review.steps)}
+                </div>
+                {review.tips && (
+                    <div className="mt-2 text-xs">
+                        <span className="font-bold text-gray-500">Tips:</span> <span className="text-gray-600 line-clamp-1">{review.tips}</span>
+                    </div>
+                )}
+                {review.comments && (
+                    <div className="mt-1 text-xs">
+                        <span className="font-bold text-gray-500">Comments:</span> <span className="text-gray-600 line-clamp-1">{review.comments}</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-end">
+                <button
+                    onClick={() => onViewMore(review)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-vgec-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                >
+                    <Eye className="h-4 w-4" />
+                    View Details
+                </button>
+            </div>
+
+            {review.status === 'approved' && review.approved_by_email && (
+                <div className="mt-4 pt-2 border-t border-gray-50 text-xs text-green-700">
+                    <span className="font-semibold">Approved by:</span> {review.approved_by_email}
                 </div>
             )}
         </div>

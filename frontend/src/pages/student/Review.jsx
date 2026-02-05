@@ -12,18 +12,56 @@ const Review = () => {
         company_name: '',
         role: '',
         type: 'on campus',
-        steps: '',
         level: 'medium',
-        tips: ''
+        tips: '',
+        comments: ''
+    });
+
+    const [selectedRounds, setSelectedRounds] = useState({
+        aptitude: false,
+        technical: false,
+        hr: false,
+    });
+
+    const [roundDetails, setRoundDetails] = useState({
+        aptitude: "",
+        technical: "",
+        hr: "",
     });
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+    const handleCheckboxChange = (e) => {
+        const { name, checked } = e.target;
+        setSelectedRounds((prev) => ({ ...prev, [name]: checked }));
+    };
+
+    const handleDetailChange = (e) => {
+        const { name, value } = e.target;
+        setRoundDetails((prev) => ({ ...prev, [name]: value }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const finalSteps = {};
+        Object.keys(selectedRounds).forEach((key) => {
+            if (selectedRounds[key]) {
+                finalSteps[key] = roundDetails[key];
+            }
+        });
+
+        // Basic Validation
+        if (Object.keys(finalSteps).length === 0) {
+            alert("Please select at least one round and provide details.");
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
-            await axios.post(getApiUrl('/reviews'), formData, {
+            const payload = { ...formData, steps: finalSteps };
+
+            await axios.post(getApiUrl('/reviews'), payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             alert('Review submitted for approval!');
@@ -93,9 +131,42 @@ const Review = () => {
 
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Interview Steps & Experience *</label>
-                        <textarea name="steps" value={formData.steps} onChange={handleChange} required rows="6"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
-                            placeholder="Describe the rounds, coding questions asked, and overall process..." />
+
+                        <div className="flex space-x-6 mb-4">
+                            {Object.keys(selectedRounds).map((round) => (
+                                <label key={round} className="flex items-center space-x-2 cursor-pointer select-none">
+                                    <input
+                                        type="checkbox"
+                                        name={round}
+                                        checked={selectedRounds[round]}
+                                        onChange={handleCheckboxChange}
+                                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    />
+                                    <span className="capitalize text-gray-700 font-medium">{round}</span>
+                                </label>
+                            ))}
+                        </div>
+
+                        <div className="space-y-4">
+                            {Object.keys(selectedRounds).map((round) => (
+                                selectedRounds[round] && (
+                                    <div key={round} className="animate-fadeIn">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                                            {round} Round Questions/Details *
+                                        </label>
+                                        <textarea
+                                            name={round}
+                                            required
+                                            rows={4}
+                                            value={roundDetails[round]}
+                                            onChange={handleDetailChange}
+                                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
+                                            placeholder={`Describe the ${round} round, questions asked, and your experience...`}
+                                        />
+                                    </div>
+                                )
+                            ))}
+                        </div>
                     </div>
 
                     <div>

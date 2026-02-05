@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { ThumbsUp, Clock, User, Building } from "lucide-react";
+import { ThumbsUp, Clock, User, Building, Eye } from "lucide-react";
 import { getApiUrl } from '../utils/apiConfig';
 
-const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
+const ReviewCard = ({ review: initialReview, showFullContent = false, onViewMore }) => {
   const { user } = useAuth();
   const [review, setReview] = useState(initialReview);
   const [isExpanded, setIsExpanded] = useState(showFullContent);
@@ -83,8 +83,59 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
 
   const truncateText = (text, maxLength = 200) => {
     if (!text) return "";
+    if (typeof text !== 'string') return "";
     if (text.length <= maxLength) return text;
     return text.substring(0, maxLength) + "...";
+  };
+
+  // Helper to format round names (HR -> HR, others -> Capitalized)
+  const formatRoundName = (name) => {
+    if (name.toLowerCase() === 'hr') return 'HR';
+    return name.charAt(0).toUpperCase() + name.slice(1);
+  };
+
+  const renderSteps = (steps, expanded) => {
+    if (!steps) return <span className="text-gray-400 italic">No details provided.</span>;
+
+    // Handle legacy string format
+    if (typeof steps === 'string') {
+      return (
+        <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+          {expanded ? steps : truncateText(steps)}
+        </p>
+      );
+    }
+
+    // Handle new object format
+    if (typeof steps === 'object') {
+      const rounds = Object.keys(steps).filter(key => steps[key] && steps[key].trim());
+
+      if (rounds.length === 0) return <span className="text-gray-400 italic">No details provided.</span>;
+
+      if (!expanded) {
+        // Preview mode: Show first non-empty round truncated
+        const firstRound = rounds[0];
+        return (
+          <div className="text-gray-600 text-sm leading-relaxed">
+            <span className="font-semibold text-gray-700">{formatRoundName(firstRound)}: </span>
+            {truncateText(steps[firstRound])}
+            {rounds.length > 1 && <span className="text-gray-400 text-xs ml-1">(+{rounds.length - 1} more rounds)</span>}
+          </div>
+        );
+      }
+
+      // Expanded mode: Show all rounds
+      return (
+        <div className="space-y-3 mt-2">
+          {rounds.map(round => (
+            <div key={round} className="bg-gray-50 p-3 rounded-md border border-gray-100">
+              <h5 className="font-semibold text-gray-700 text-sm mb-1">{formatRoundName(round)} Round</h5>
+              <p className="text-gray-600 text-sm whitespace-pre-wrap">{steps[round]}</p>
+            </div>
+          ))}
+        </div>
+      );
+    }
   };
 
   return (
@@ -129,23 +180,35 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
 
         {/* Content */}
         <div className="space-y-4">
+          {/* Interview Process - Always visible (truncated if not expanded) */}
           <div>
             <h4 className="text-sm font-bold text-gray-800 mb-1 border-l-2 border-vgec-blue pl-2">
               Interview Process
             </h4>
-            <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
-              {isExpanded ? review.steps : truncateText(review.steps)}
-            </p>
+            {renderSteps(review.steps, isExpanded)}
           </div>
 
-          {review.tips && (
-            <div className="bg-orange-50 p-3 rounded-lg border border-orange-100">
-              <h4 className="text-xs font-bold text-vgec-orange uppercase mb-1">Tips for Juniors</h4>
-              <p className="text-gray-700 text-sm italic">
-                {isExpanded ? review.tips : truncateText(review.tips)}
-              </p>
-            </div>
+
+          {/* Full Content (Expanded) */}
+          {isExpanded && (
+            <>
+              {review.tips && (
+                <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 animate-fadeIn mt-3">
+                  <h4 className="text-xs font-bold text-vgec-orange uppercase mb-1">Tips for Juniors</h4>
+                  <p className="text-gray-700 text-sm italic whitespace-pre-wrap">{review.tips}</p>
+                </div>
+              )}
+
+              {review.comments && (
+                <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 animate-fadeIn mt-3">
+                  <h4 className="text-xs font-bold text-blue-800 uppercase mb-1">Additional Comments</h4>
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{review.comments}</p>
+                </div>
+              )}
+            </>
           )}
+
+
         </div>
       </div>
 
@@ -173,12 +236,18 @@ const ReviewCard = ({ review: initialReview, showFullContent = false }) => {
           </button>
         </div>
 
-        {(review.steps?.length > 200 || review.tips?.length > 200) && (
+        {/* Show button - if onViewMore is provided, always show "View More" to open modal. 
+            Otherwise fall back to expand logic if content is long/hidden */}
+        {/* Show button - if onViewMore is provided, always show "View More" to open modal. 
+            Otherwise fall back to expand logic if content is long/hidden */}
+        {/* Show button logic updated to handle object length check somewhat loosely for object types */}
+        {(onViewMore || (typeof review.steps === 'string' ? review.steps.length > 200 : true) || review.tips || review.comments) && (
           <button
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="text-vgec-blue hover:text-blue-800 text-sm font-semibold hover:underline"
+            onClick={() => onViewMore ? onViewMore(review) : setIsExpanded(!isExpanded)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-vgec-blue bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
           >
-            {isExpanded ? "Show Less" : "Read Full Review"}
+            <Eye className="h-4 w-4" />
+            {onViewMore ? "View Details" : (isExpanded ? "Show Less" : "View Details")}
           </button>
         )}
       </div>

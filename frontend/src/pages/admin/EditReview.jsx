@@ -89,9 +89,21 @@ const AdminEditReview = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Steps</label>
-                        <textarea name="steps" value={formData.steps} onChange={handleChange} rows="6"
-                            className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-vgec-blue outline-none" />
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">Steps (Edit Disabled for Object Format)</label>
+                        {typeof formData.steps === 'object' && formData.steps !== null ? (
+                            <div className="space-y-2 border border-gray-200 rounded-lg p-3 bg-gray-50">
+                                {Object.keys(formData.steps).map(key => (
+                                    <div key={key}>
+                                        <span className="font-bold capitalize">{key}:</span>
+                                        <p className="text-sm text-gray-600">{formData.steps[key]}</p>
+                                    </div>
+                                ))}
+                                <p className="text-xs text-red-500 mt-2">* Editing structured steps is currently not supported in Admin panel.</p>
+                            </div>
+                        ) : (
+                            <textarea name="steps" value={formData.steps} onChange={handleChange} rows="6"
+                                className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-vgec-blue outline-none" />
+                        )}
                     </div>
 
                     <div>

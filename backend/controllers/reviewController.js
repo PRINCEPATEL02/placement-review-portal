@@ -78,7 +78,7 @@ exports.getReviews = async (req, res) => {
         // Optimize: Select only needed fields to reduce payload size
         // Added 'likedBy' to selection to check isLiked status
         const posts = await Post.find(query)
-            .select('company_name role type level steps views likes created_at enrollment status author likedBy')
+            .select('company_name role type level steps views likes created_at enrollment status author likedBy tips comments')
             .sort({ created_at: -1 })
             .lean();
 

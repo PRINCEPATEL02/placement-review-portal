@@ -17,8 +17,19 @@ const AddReview = () => {
     role: "",
     type: "",
     level: "",
-    steps: "",
     tips: "",
+  });
+
+  const [selectedRounds, setSelectedRounds] = useState({
+    aptitude: false,
+    technical: false,
+    hr: false,
+  });
+
+  const [roundDetails, setRoundDetails] = useState({
+    aptitude: "",
+    technical: "",
+    hr: "",
   });
 
   const handleChange = (e) => {
@@ -27,12 +38,30 @@ const AddReview = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({
         ...prev,
         [name]: "",
       }));
+    }
+  };
+
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setSelectedRounds((prev) => ({
+      ...prev,
+      [name]: checked,
+    }));
+  };
+
+  const handleDetailChange = (e) => {
+    const { name, value } = e.target;
+    setRoundDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    if (errors.steps) {
+      setErrors((prev) => ({ ...prev, steps: "" }));
     }
   };
 
@@ -51,8 +80,17 @@ const AddReview = () => {
     if (!formData.level) {
       newErrors.level = "Difficulty level is required";
     }
-    if (!formData.steps.trim()) {
-      newErrors.steps = "Placement steps are required";
+
+    const isAnyRoundSelected = Object.values(selectedRounds).some(Boolean);
+    if (!isAnyRoundSelected) {
+      newErrors.steps = "Please select at least one interview round";
+    } else {
+      for (const [key, isSelected] of Object.entries(selectedRounds)) {
+        if (isSelected && !roundDetails[key].trim()) {
+          newErrors.steps = `Please provide details for the ${key} round`;
+          break;
+        }
+      }
     }
     if (!formData.tips.trim()) {
       newErrors.tips = "Tips for juniors are required";
@@ -99,7 +137,14 @@ const AddReview = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!validateForm()) return;
-    mutation.mutate(formData);
+    const finalSteps = {};
+    Object.keys(selectedRounds).forEach((key) => {
+      if (selectedRounds[key]) {
+        finalSteps[key] = roundDetails[key];
+      }
+    });
+
+    mutation.mutate({ ...formData, steps: finalSteps });
   };
 
   return (
@@ -233,24 +278,47 @@ const AddReview = () => {
 
           {/* Placement Steps */}
           <div>
-            <label
-              htmlFor="steps"
-              className="block text-sm font-medium text-secondary-700 mb-2"
-            >
-              Placement Process/Steps *
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
+              Interview Rounds *
             </label>
-            <textarea
-              id="steps"
-              name="steps"
-              rows={6}
-              value={formData.steps}
-              onChange={handleChange}
-              className={`input-field resize-none ${errors.steps ? "border-red-300 focus:ring-red-500" : ""}`}
-              placeholder="Describe the complete placement process, including all rounds, interviews, tests, etc. Be as detailed as possible to help other students."
-            />
+            <div className="flex space-x-6 mb-4">
+              {Object.keys(selectedRounds).map((round) => (
+                <label key={round} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name={round}
+                    checked={selectedRounds[round]}
+                    onChange={handleCheckboxChange}
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <span className="capitalize text-secondary-700">{round}</span>
+                </label>
+              ))}
+            </div>
+
             {errors.steps && (
-              <p className="mt-1 text-sm text-red-600">{errors.steps}</p>
+              <p className="mb-4 text-sm text-red-600">{errors.steps}</p>
             )}
+
+            <div className="space-y-4">
+              {Object.keys(selectedRounds).map((round) => (
+                selectedRounds[round] && (
+                  <div key={round} className="animate-fadeIn">
+                    <label className="block text-sm font-medium text-secondary-700 mb-2 capitalize">
+                      {round} Round Questions/Details *
+                    </label>
+                    <textarea
+                      name={round}
+                      rows={4}
+                      value={roundDetails[round]}
+                      onChange={handleDetailChange}
+                      className="input-field resize-none"
+                      placeholder={`Describe the ${round} round, questions asked, and your experience...`}
+                    />
+                  </div>
+                )
+              ))}
+            </div>
           </div>
 
           {/* Tips for Juniors */}
